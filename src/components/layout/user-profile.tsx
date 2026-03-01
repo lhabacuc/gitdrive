@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -8,12 +8,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, ChevronUp } from "lucide-react";
+import { LogOut, ChevronUp, LogIn } from "lucide-react";
 
 export function UserProfile() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  if (!session?.user) return null;
+  if (status === "loading") return null;
+
+  if (!session?.user) {
+    return (
+      <button
+        onClick={() => signIn("github", { callbackUrl: "/drive" })}
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-white/[0.06] transition-colors text-muted-foreground hover:text-foreground"
+      >
+        <LogIn className="h-[18px] w-[18px]" />
+        <span className="text-[13px] font-medium">Sign in</span>
+      </button>
+    );
+  }
 
   return (
     <DropdownMenu>
