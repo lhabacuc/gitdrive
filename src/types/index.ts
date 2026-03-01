@@ -39,6 +39,20 @@ export interface BreadcrumbItem {
   href: string;
 }
 
+export type FolderColorName =
+  | "blue"
+  | "green"
+  | "red"
+  | "orange"
+  | "yellow"
+  | "purple"
+  | "pink"
+  | "teal"
+  | "brown"
+  | "gray";
+
+export type FolderColorsConfig = Record<string, FolderColorName>;
+
 export interface DriveConfig {
   defaultRepo: { owner: string; repo: string } | null;
   displayName: string;

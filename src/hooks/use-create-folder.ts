@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { GitHubFile } from "@/types";
 
 interface CreateFolderParams {
   owner: string;
@@ -28,7 +29,36 @@ export function useCreateFolder() {
 
   return useMutation({
     mutationFn: createFolder,
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      const dirPath = variables.path.split("/").slice(0, -1).join("/");
+      const folderName = variables.path.split("/").pop() || "";
+      const queryKey = ["contents", variables.owner, variables.repo, dirPath];
+
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<GitHubFile[]>(queryKey);
+
+      const optimisticFolder: GitHubFile = {
+        name: folderName,
+        path: variables.path,
+        sha: "optimistic",
+        size: 0,
+        type: "dir",
+        download_url: null,
+        html_url: "",
+      };
+
+      queryClient.setQueryData<GitHubFile[]>(queryKey, (old) =>
+        old ? [...old, optimisticFolder] : [optimisticFolder]
+      );
+
+      return { previous, queryKey };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       const dirPath = variables.path.split("/").slice(0, -1).join("/");
       queryClient.invalidateQueries({
         queryKey: ["contents", variables.owner, variables.repo, dirPath],

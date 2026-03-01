@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { GitHubFile } from "@/types";
 
 interface DeleteParams {
   owner: string;
@@ -37,7 +38,25 @@ export function useDelete() {
 
   return useMutation({
     mutationFn: deleteItem,
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      const dirPath = variables.path.split("/").slice(0, -1).join("/");
+      const queryKey = ["contents", variables.owner, variables.repo, dirPath];
+
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<GitHubFile[]>(queryKey);
+
+      queryClient.setQueryData<GitHubFile[]>(queryKey, (old) =>
+        old?.filter((item) => item.path !== variables.path)
+      );
+
+      return { previous, queryKey };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       const dirPath = variables.path.split("/").slice(0, -1).join("/");
       queryClient.invalidateQueries({
         queryKey: ["contents", variables.owner, variables.repo, dirPath],

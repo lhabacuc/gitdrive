@@ -13,7 +13,8 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Download, Eye, Trash2, Copy, Scissors } from "lucide-react";
+import { Download, Eye, Trash2, Link2, Pencil, Info } from "lucide-react";
+import { toast } from "sonner";
 
 const iconComponents: Record<string, LucideIcon> = {
   file: File,
@@ -34,18 +35,30 @@ interface FileCardProps {
   onPreview: () => void;
   onDownload: () => void;
   onDelete: () => void;
+  onRename?: () => void;
+  onGetInfo?: () => void;
 }
 
 export function FileCard({
   file,
+  owner,
+  repo,
   selected,
   onSelect,
   onPreview,
   onDownload,
   onDelete,
+  onRename,
+  onGetInfo,
 }: FileCardProps) {
   const iconType = getFileIcon(file.name);
   const IconComponent = iconComponents[iconType] || File;
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/preview/${owner}/${repo}/${file.path}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link copied to clipboard");
+  };
 
   return (
     <ContextMenu>
@@ -81,14 +94,22 @@ export function FileCard({
           Open
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem>
-          <Scissors className="mr-2 h-4 w-4" />
-          Cut
+        <ContextMenuItem onClick={handleCopyLink}>
+          <Link2 className="mr-2 h-4 w-4" />
+          Copy Link
         </ContextMenuItem>
-        <ContextMenuItem>
-          <Copy className="mr-2 h-4 w-4" />
-          Copy
-        </ContextMenuItem>
+        {onRename && (
+          <ContextMenuItem onClick={onRename}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Rename
+          </ContextMenuItem>
+        )}
+        {onGetInfo && (
+          <ContextMenuItem onClick={onGetInfo}>
+            <Info className="mr-2 h-4 w-4" />
+            Get Info
+          </ContextMenuItem>
+        )}
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onDownload}>
           <Download className="mr-2 h-4 w-4" />

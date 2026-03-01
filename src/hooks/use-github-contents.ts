@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { GitHubFile } from "@/types";
 
-async function fetchContents(
+export async function fetchContents(
   owner: string,
   repo: string,
   path: string

@@ -47,3 +47,29 @@ export const driveConfigSchema = z.object({
 export const configUpdateSchema = repoParamsSchema.extend({
   config: driveConfigSchema,
 });
+
+export const folderColorNameSchema = z.enum([
+  "blue",
+  "green",
+  "red",
+  "orange",
+  "yellow",
+  "purple",
+  "pink",
+  "teal",
+  "brown",
+  "gray",
+]);
+
+export const folderColorsConfigSchema = z.record(z.string(), folderColorNameSchema);
+
+export const folderColorsUpdateSchema = repoParamsSchema.extend({
+  colors: folderColorsConfigSchema,
+});
+
+export const renameSchema = repoParamsSchema.extend({
+  oldPath: z.string().min(1),
+  newPath: z.string().min(1),
+  type: z.enum(["file", "dir"]),
+  sha: z.string().optional(),
+});

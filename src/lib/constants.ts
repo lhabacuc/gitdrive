@@ -5,3 +5,4 @@ export const APP_NAME = "GitDrive";
 export const GITKEEP_FILENAME = ".gitkeep";
 export const CONFIG_FOLDER = ".gitdrive_user_config";
 export const CONFIG_PATH = ".gitdrive_user_config/config.json";
+export const FOLDER_COLORS_PATH = ".gitdrive_user_config/folder-colors.json";

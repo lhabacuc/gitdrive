@@ -10,8 +10,11 @@ import { useCallback, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/actions/delete-dialog";
 import { UploadDialog } from "@/components/actions/upload-dialog";
 import { CreateFolderDialog } from "@/components/actions/create-folder-dialog";
+import { RenameDialog } from "@/components/actions/rename-dialog";
+import { InfoDialog } from "@/components/actions/info-dialog";
 import { useDragSelect } from "@/hooks/use-drag-select";
 import { useDriveConfig } from "@/hooks/use-drive-config";
+import { useFolderColors, useUpdateFolderColor } from "@/hooks/use-folder-colors";
 import { CONFIG_FOLDER } from "@/lib/constants";
 import {
   ContextMenu,
@@ -33,11 +36,15 @@ interface FileGridProps {
 export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGridProps) {
   const router = useRouter();
   const [deleteItem, setDeleteItem] = useState<GitHubFile | null>(null);
+  const [renameItem, setRenameItem] = useState<GitHubFile | null>(null);
+  const [infoItem, setInfoItem] = useState<GitHubFile | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [uploadOpen, setUploadOpen] = useState(false);
   const [folderOpen, setFolderOpen] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const { config } = useDriveConfig(owner, repo);
+  const { colors } = useFolderColors(owner, repo);
+  const updateFolderColor = useUpdateFolderColor();
 
   const onSelectionChange = useCallback((paths: Set<string>) => {
     setSelected(paths);
@@ -183,9 +190,22 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
                     key={item.path}
                     folder={item}
                     href={`/drive/${owner}/${repo}/tree/${item.path}`}
+                    owner={owner}
+                    repo={repo}
                     selected={selected.has(item.path)}
+                    colorName={colors[item.path] || "blue"}
                     onSelect={(e) => handleItemSelect(item.path, e)}
                     onDelete={() => setDeleteItem(item)}
+                    onColorChange={(color) =>
+                      updateFolderColor.mutate({
+                        owner,
+                        repo,
+                        path: item.path,
+                        color,
+                      })
+                    }
+                    onRename={() => setRenameItem(item)}
+                    onGetInfo={() => setInfoItem(item)}
                   />
                 ) : (
                   <FileCard
@@ -198,6 +218,8 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
                     onPreview={() => handlePreview(item)}
                     onDownload={() => handleDownload(item)}
                     onDelete={() => setDeleteItem(item)}
+                    onRename={() => setRenameItem(item)}
+                    onGetInfo={() => setInfoItem(item)}
                   />
                 )
               )}
@@ -250,6 +272,20 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
         repo={repo}
         open={!!deleteItem}
         onOpenChange={(open) => !open && setDeleteItem(null)}
+      />
+      <RenameDialog
+        item={renameItem}
+        owner={owner}
+        repo={repo}
+        open={!!renameItem}
+        onOpenChange={(open) => !open && setRenameItem(null)}
+      />
+      <InfoDialog
+        item={infoItem}
+        owner={owner}
+        repo={repo}
+        open={!!infoItem}
+        onOpenChange={(open) => !open && setInfoItem(null)}
       />
       <UploadDialog
         open={uploadOpen}
