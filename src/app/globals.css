@@ -2,26 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* GNOME Adwaita Dark Theme */
+    --background: 240 2% 14%;          /* #222226 window-bg */
+    --foreground: 0 0% 100%;            /* #ffffff */
+    --card: 240 2% 21%;                 /* ~#343438 card-bg (white 8% on window) */
+    --card-foreground: 0 0% 100%;
+    --popover: 240 2% 22%;              /* #36363a popover-bg */
+    --popover-foreground: 0 0% 100%;
+    --primary: 211 77% 55%;             /* #3584e4 accent-bg */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 2% 17%;            /* #28282c */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 2% 17%;                /* #28282c */
+    --muted-foreground: 0 0% 60%;       /* #999 */
+    --accent: 211 77% 55%;              /* #3584e4 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 355 74% 43%;         /* #c01c28 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 2% 26%;               /* subtle border ~#404044 */
+    --input: 240 2% 24%;                /* slightly lighter for inputs */
+    --ring: 211 77% 55%;
+    --radius: 0.75rem;                  /* 12px - Adwaita rounded corners */
+    --sidebar: 240 2% 19%;              /* #2e2e32 sidebar-bg */
+    --topbar: 240 2% 19%;               /* #2e2e32 headerbar-bg */
+    --view: 240 2% 12%;                 /* #1d1d20 view-bg */
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground select-none;
+  }
+  /* Allow text selection only in preview content and search inputs */
+  pre, code, input, textarea, [contenteditable="true"] {
+    @apply select-text;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.12) transparent;
   }
 }
