@@ -20,7 +20,7 @@ export async function DELETE(request: NextRequest) {
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
+   
   try {
     const body = await request.json();
     const parsed = deleteParamsSchema.safeParse(body);
