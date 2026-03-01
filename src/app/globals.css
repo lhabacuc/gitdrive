@@ -53,3 +53,22 @@
     scrollbar-color: rgba(255,255,255,0.12) transparent;
   }
 }
+
+/* Safe area insets for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile viewport fix for address bar */
+@supports (height: 100dvh) {
+  .h-screen-safe {
+    height: 100dvh;
+  }
+}
+@supports not (height: 100dvh) {
+  .h-screen-safe {
+    height: 100vh;
+  }
+}

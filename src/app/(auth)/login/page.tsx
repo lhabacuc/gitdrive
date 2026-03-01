@@ -4,7 +4,7 @@ import { Github } from "lucide-react";
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-8 p-8">
+      <div className="w-full max-w-md space-y-8 p-4 sm:p-8">
         <div className="text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary">
@@ -12,7 +12,7 @@ export default function LoginPage() {
               <polyline points="13 2 13 9 20 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h1 className="mt-6 text-3xl font-bold text-foreground">GitDrive</h1>
+          <h1 className="mt-6 text-2xl sm:text-3xl font-bold text-foreground">GitDrive</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Cloud storage powered by GitHub repositories
           </p>

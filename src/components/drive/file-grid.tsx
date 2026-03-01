@@ -183,7 +183,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
             onMouseDown={handleMouseDown}
             className="relative flex-1 bg-[hsl(var(--view))]"
           >
-            <div className="grid grid-cols-3 gap-1 p-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-2 gap-1.5 p-2 sm:grid-cols-3 sm:gap-1 sm:p-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
               {sorted.map((item) =>
                 item.type === "dir" ? (
                   <FolderCard

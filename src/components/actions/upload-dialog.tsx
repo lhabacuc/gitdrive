@@ -120,7 +120,7 @@ export function UploadDialog({
         {/* Dropzone */}
         <div
           {...getRootProps()}
-          className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer ${
+          className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 sm:p-8 transition-colors cursor-pointer ${
             isDragActive
               ? "border-primary bg-primary/5"
               : "border-border hover:border-primary/50"

@@ -13,7 +13,7 @@ export function RepoSelector() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 p-3 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <Skeleton key={i} className="h-28 rounded-xl" />
         ))}
@@ -30,7 +30,7 @@ export function RepoSelector() {
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4 p-3 sm:p-6">
       <div>
         <h2 className="text-base font-semibold text-foreground">Repositories</h2>
         <p className="text-xs text-muted-foreground mt-0.5">

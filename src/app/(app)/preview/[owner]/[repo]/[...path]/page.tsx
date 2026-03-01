@@ -58,20 +58,20 @@ export default function PreviewPage() {
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--view))]">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/[0.06] bg-[hsl(var(--view))]">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 border-b border-white/[0.06] bg-[hsl(var(--view))]">
         <button
           onClick={() => router.back()}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.07] transition-colors"
+          className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.07] transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
-        <span className="text-sm font-medium truncate flex-1">{fileName}</span>
+        <span className="text-xs sm:text-sm font-medium truncate flex-1 min-w-0">{fileName}</span>
         <a
           href={downloadUrl}
           download={fileName}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.07] transition-colors"
+          className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.07] transition-colors"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-4 w-4 sm:h-5 sm:w-5" />
         </a>
       </div>
 
@@ -84,24 +84,24 @@ export default function PreviewPage() {
         )}
 
         {error && (
-          <div className="flex items-center justify-center py-24 text-muted-foreground">
-            <p className="text-sm">{error}</p>
+          <div className="flex items-center justify-center py-24 text-muted-foreground px-4">
+            <p className="text-sm text-center">{error}</p>
           </div>
         )}
 
         {!loading && !error && isImage && blobUrl && (
-          <div className="flex items-center justify-center p-8">
+          <div className="flex items-center justify-center p-3 sm:p-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={blobUrl}
               alt={fileName}
-              className="max-w-full max-h-[75vh] object-contain rounded-lg"
+              className="max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain rounded-lg"
             />
           </div>
         )}
 
         {!loading && !error && isText && content !== null && (
-          <pre className="p-6 text-[13px] leading-relaxed text-foreground/90 overflow-auto font-mono whitespace-pre-wrap break-words">
+          <pre className="p-3 sm:p-6 text-xs sm:text-[13px] leading-relaxed text-foreground/90 overflow-auto font-mono whitespace-pre-wrap break-words">
             {content}
           </pre>
         )}

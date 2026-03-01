@@ -70,14 +70,14 @@ export function FileCard({
           className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
             selected
               ? "bg-primary/20"
-              : "hover:bg-white/[0.04]"
+              : "hover:bg-white/[0.04] active:bg-white/[0.08]"
           }`}
         >
-          <div className="flex h-16 w-16 items-center justify-center">
-            <IconComponent className="h-10 w-10 text-muted-foreground/60" />
+          <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center">
+            <IconComponent className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/60" />
           </div>
           <span
-            className={`text-xs leading-tight text-center w-full truncate px-1 rounded ${
+            className={`text-[11px] sm:text-xs leading-tight text-center w-full truncate px-1 rounded ${
               selected ? "bg-primary text-primary-foreground" : "text-foreground"
             }`}
           >

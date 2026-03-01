@@ -27,26 +27,26 @@ function InfoRow({ label, value, copyable, href }: {
   href?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-1.5">
-      <span className="text-[13px] text-muted-foreground shrink-0">{label}</span>
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-0.5 sm:gap-4 py-2">
+      <span className="text-xs sm:text-[13px] text-muted-foreground shrink-0">{label}</span>
       <div className="flex items-center gap-1.5 min-w-0">
         {href ? (
           <a
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[13px] text-primary hover:underline truncate"
+            className="text-xs sm:text-[13px] text-primary hover:underline truncate"
           >
             {value}
           </a>
         ) : (
-          <span className="text-[13px] text-foreground truncate">{value}</span>
+          <span className="text-xs sm:text-[13px] text-foreground truncate">{value}</span>
         )}
         {copyable && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-5 w-5 shrink-0"
+            className="h-6 w-6 shrink-0"
             onClick={() => {
               navigator.clipboard.writeText(href || value);
               toast.success("Copied to clipboard");
@@ -56,7 +56,7 @@ function InfoRow({ label, value, copyable, href }: {
           </Button>
         )}
         {href && (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="shrink-0">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1">
             <ExternalLink className="h-3 w-3 text-muted-foreground" />
           </a>
         )}

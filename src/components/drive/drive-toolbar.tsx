@@ -18,23 +18,23 @@ export function DriveToolbar({ owner, repo, currentPath }: DriveToolbarProps) {
 
   return (
     <>
-      <div className="flex items-center gap-2 px-6 pb-2">
+      <div className="flex items-center gap-2 px-2 sm:px-6 pb-2">
         <Button
           size="sm"
           onClick={() => setUploadOpen(true)}
-          className="gap-2"
+          className="gap-1.5 sm:gap-2"
         >
           <Upload className="h-4 w-4" />
-          Upload
+          <span className="hidden sm:inline">Upload</span>
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={() => setFolderOpen(true)}
-          className="gap-2"
+          className="gap-1.5 sm:gap-2"
         >
           <FolderPlus className="h-4 w-4" />
-          New Folder
+          <span className="hidden sm:inline">New Folder</span>
         </Button>
       </div>
 

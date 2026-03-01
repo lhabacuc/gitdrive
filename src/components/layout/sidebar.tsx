@@ -13,11 +13,11 @@ const navItems = [
   { label: "Trash", href: "/drive", icon: Trash2 },
 ];
 
-export function Sidebar() {
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-56 flex-col bg-[hsl(var(--sidebar))] border-r border-white/[0.08]">
+    <>
       {/* Headerbar spacer — same height as topbar to align */}
       <div className="h-[46px] flex items-center px-4 border-b border-white/[0.08]">
         <span className="text-sm font-semibold text-foreground">Files</span>
@@ -31,8 +31,9 @@ export function Sidebar() {
             <Link
               key={`${item.label}-${i}`}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 md:py-[7px] text-[13px] transition-colors",
                 isActive
                   ? "bg-white/[0.08] text-foreground font-medium"
                   : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground"
@@ -46,11 +47,12 @@ export function Sidebar() {
       </nav>
 
       {/* Settings + User Profile at bottom */}
-      <div className="border-t border-white/[0.08] p-2 space-y-0.5">
+      <div className="border-t border-white/[0.08] p-2 space-y-0.5 safe-bottom">
         <Link
           href="/settings"
+          onClick={onNavigate}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] transition-colors",
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 md:py-[7px] text-[13px] transition-colors",
             pathname.startsWith("/settings")
               ? "bg-white/[0.08] text-foreground font-medium"
               : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground"
@@ -61,6 +63,14 @@ export function Sidebar() {
         </Link>
         <UserProfile />
       </div>
+    </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="hidden md:flex h-full w-56 flex-col bg-[hsl(var(--sidebar))] border-r border-white/[0.08]">
+      <SidebarContent />
     </aside>
   );
 }

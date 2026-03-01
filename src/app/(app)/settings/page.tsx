@@ -106,9 +106,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
+    <div className="mx-auto max-w-2xl space-y-6 p-3 sm:p-6">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Settings</h1>
+        <h1 className="text-base sm:text-lg font-semibold text-foreground">Settings</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Configure your drive preferences. Settings are stored in the selected
           repository.
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                   key={repo.id}
                   onClick={() => handleSelectRepo(repo)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all",
+                    "flex items-center gap-2 sm:gap-3 rounded-lg px-2.5 sm:px-3 py-2.5 text-left transition-all",
                     isSelected
                       ? "bg-primary/15 border border-primary/40"
                       : "bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06]"
@@ -155,7 +155,7 @@ export default function SettingsPage() {
                       isSelected ? "text-primary" : "text-muted-foreground"
                     )}
                   />
-                  <span className="text-sm font-medium text-foreground truncate flex-1">
+                  <span className="text-xs sm:text-sm font-medium text-foreground truncate flex-1 min-w-0">
                     {repo.owner.login}/{repo.name}
                   </span>
                   {repo.private ? (
@@ -213,7 +213,7 @@ export default function SettingsPage() {
                 key={mode}
                 onClick={() => setForm((f) => ({ ...f, viewMode: mode }))}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors border",
+                  "flex items-center gap-2 rounded-lg px-3 sm:px-4 py-2 text-sm transition-colors border",
                   form.viewMode === mode
                     ? "bg-primary/15 border-primary/40 text-foreground"
                     : "bg-white/[0.03] border-white/[0.06] text-muted-foreground hover:bg-white/[0.06]"
@@ -224,7 +224,9 @@ export default function SettingsPage() {
                 ) : (
                   <List className="h-4 w-4" />
                 )}
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                <span className="hidden sm:inline">
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </span>
               </button>
             ))}
           </div>
@@ -233,13 +235,13 @@ export default function SettingsPage() {
         {/* Sort By */}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Sort By</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {(["name", "size", "date"] as const).map((field) => (
               <button
                 key={field}
                 onClick={() => setForm((f) => ({ ...f, sortBy: field }))}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-sm transition-colors border",
+                  "rounded-lg px-3 sm:px-4 py-2 text-sm transition-colors border",
                   form.sortBy === field
                     ? "bg-primary/15 border-primary/40 text-foreground"
                     : "bg-white/[0.03] border-white/[0.06] text-muted-foreground hover:bg-white/[0.06]"
@@ -260,7 +262,7 @@ export default function SettingsPage() {
                 key={order}
                 onClick={() => setForm((f) => ({ ...f, sortOrder: order }))}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors border",
+                  "flex items-center gap-2 rounded-lg px-3 sm:px-4 py-2 text-sm transition-colors border",
                   form.sortOrder === order
                     ? "bg-primary/15 border-primary/40 text-foreground"
                     : "bg-white/[0.03] border-white/[0.06] text-muted-foreground hover:bg-white/[0.06]"
@@ -271,7 +273,9 @@ export default function SettingsPage() {
                 ) : (
                   <ArrowDownAZ className="h-4 w-4" />
                 )}
-                {order === "asc" ? "Ascending" : "Descending"}
+                <span className="hidden sm:inline">
+                  {order === "asc" ? "Ascending" : "Descending"}
+                </span>
               </button>
             ))}
           </div>
@@ -292,7 +296,7 @@ export default function SettingsPage() {
           onClick={() =>
             setForm((f) => ({ ...f, showHiddenFiles: !f.showHiddenFiles }))
           }
-          className="flex items-center justify-between w-full rounded-lg px-4 py-3 border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+          className="flex items-center justify-between w-full rounded-lg px-3 sm:px-4 py-3 border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
         >
           <div className="flex items-center gap-3">
             {form.showHiddenFiles ? (
@@ -302,7 +306,7 @@ export default function SettingsPage() {
             )}
             <div className="text-left">
               <p className="text-sm text-foreground">Show Hidden Files</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Display dotfiles and hidden folders
               </p>
             </div>
@@ -349,7 +353,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Save */}
-      <div className="flex justify-end pt-2 pb-6">
+      <div className="flex justify-end pt-2 pb-6 safe-bottom">
         <Button
           onClick={handleSave}
           disabled={!selectedRepo || updateConfig.isPending}

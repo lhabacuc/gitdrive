@@ -119,16 +119,16 @@ export function FolderCard({
           onClick={onSelect}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
+          className={`group relative flex flex-col items-center gap-1 p-2 sm:p-2 rounded-xl transition-colors ${
             selected
               ? "bg-primary/20"
-              : "hover:bg-white/[0.04]"
+              : "hover:bg-white/[0.04] active:bg-white/[0.08]"
           }`}
         >
-          <Link href={href} className="flex flex-col items-center gap-1.5 w-full">
-            <AdwaitaFolderIcon className="h-16 w-16" colorName={colorName} />
+          <Link href={href} className="flex flex-col items-center gap-1 sm:gap-1.5 w-full">
+            <AdwaitaFolderIcon className="h-12 w-12 sm:h-16 sm:w-16" colorName={colorName} />
             <span
-              className={`text-xs leading-tight text-center w-full truncate px-1 rounded ${
+              className={`text-[11px] sm:text-xs leading-tight text-center w-full truncate px-1 rounded ${
                 selected ? "bg-primary text-primary-foreground" : "text-foreground"
               }`}
             >
