@@ -1,13 +1,33 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 
+const secret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  process.env.SECRET;
+
+if (!secret) {
+  console.error(
+    "[auth] No secret found. Available env keys:",
+    Object.keys(process.env).filter((k) =>
+      /secret|auth/i.test(k)
+    )
+  );
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  secret,
   trustHost: true,
   providers: [
     GitHub({
-      clientId: process.env.AUTH_GITHUB_ID ?? process.env.GITHUB_ID!,
-      clientSecret: process.env.AUTH_GITHUB_SECRET ?? process.env.GITHUB_SECRET!,
+      clientId:
+        process.env.AUTH_GITHUB_ID ??
+        process.env.GITHUB_ID ??
+        "",
+      clientSecret:
+        process.env.AUTH_GITHUB_SECRET ??
+        process.env.GITHUB_SECRET ??
+        "",
       authorization: {
         params: {
           scope: "repo read:user user:email",
@@ -36,5 +56,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
 });
