@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background (full bleed for maskable) -->
+  <rect width="512" height="512" fill="#1d1d20"/>
+  <!-- Folder shadow (scaled down ~80% centered for safe zone) -->
+  <path d="M108 216C108 198.3 122.3 184 140 184H230L266 216H372C389.7 216 404 230.3 404 248V364C404 381.7 389.7 396 372 396H140C122.3 396 108 381.7 108 364V216Z" fill="#c64600"/>
+  <!-- Folder back -->
+  <path d="M108 204C108 186.3 122.3 172 140 172H230L266 204H372C389.7 204 404 218.3 404 236V352C404 369.7 389.7 384 372 384H140C122.3 384 108 369.7 108 352V204Z" fill="#e66100"/>
+  <!-- Folder front -->
+  <path d="M108 244C108 229.6 119.6 218 134 218H378C392.4 218 404 229.6 404 244V352C404 369.7 389.7 384 372 384H140C122.3 384 108 369.7 108 352V244Z" fill="#ff7800"/>
+  <!-- Folder highlight -->
+  <path d="M134 218H378C392.4 218 404 229.6 404 244V256H108V244C108 229.6 119.6 218 134 218Z" fill="#ffa348" opacity="0.4"/>
+  <!-- GD text -->
+  <text x="256" y="322" text-anchor="middle" dominant-baseline="central" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-weight="700" font-size="80" fill="white" letter-spacing="-2">GD</text>
+</svg>

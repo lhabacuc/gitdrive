@@ -41,7 +41,13 @@ export function RepoSelector() {
         {repos?.map((repo: GitHubRepo) => (
           <button
             key={repo.id}
-            onClick={() => router.push(`/drive/${repo.owner.login}/${repo.name}`)}
+            onClick={() => {
+              localStorage.setItem(
+                "gitdrive_default_repo",
+                JSON.stringify({ owner: repo.owner.login, repo: repo.name })
+              );
+              router.push(`/drive/${repo.owner.login}/${repo.name}`);
+            }}
             className="flex flex-col gap-2 rounded-xl bg-white/[0.04] p-4 text-left transition-all hover:bg-white/[0.07] border border-white/[0.06]"
           >
             <div className="flex items-center gap-3">

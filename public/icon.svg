@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <rect width="512" height="512" rx="112" fill="#1d1d20"/>
+  <!-- Folder shadow -->
+  <path d="M80 200C80 178.9 97 162 118 162H230L278 200H394C415.1 200 432 217 432 238V384C432 405.1 415.1 422 394 422H118C97 422 80 405.1 80 384V200Z" fill="#c64600"/>
+  <!-- Folder back -->
+  <path d="M80 184C80 162.9 97 146 118 146H230L278 184H394C415.1 184 432 201 432 222V368C432 389.1 415.1 406 394 406H118C97 406 80 389.1 80 368V184Z" fill="#e66100"/>
+  <!-- Folder front -->
+  <path d="M80 232C80 214.3 94.3 200 112 200H400C417.7 200 432 214.3 432 232V368C432 389.1 415.1 406 394 406H118C97 406 80 389.1 80 368V232Z" fill="#ff7800"/>
+  <!-- Folder highlight -->
+  <path d="M112 200H400C417.7 200 432 214.3 432 232V248H80V232C80 214.3 94.3 200 112 200Z" fill="#ffa348" opacity="0.4"/>
+  <!-- GD text -->
+  <text x="256" y="338" text-anchor="middle" dominant-baseline="central" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-weight="700" font-size="100" fill="white" letter-spacing="-2">GD</text>
+</svg>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "sonner";
+import { ServiceWorkerRegistrar } from "@/components/providers/sw-registrar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,16 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "GitDrive - Cloud Storage powered by GitHub",
   description: "Manage your files using GitHub repositories as storage backend",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -38,6 +49,7 @@ export default function RootLayout({
             <Toaster theme="dark" position="bottom-right" />
           </QueryProvider>
         </SessionProvider>
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );
