@@ -6,3 +6,6 @@ export const GITKEEP_FILENAME = ".gitkeep";
 export const CONFIG_FOLDER = ".gitdrive_user_config";
 export const CONFIG_PATH = ".gitdrive_user_config/config.json";
 export const FOLDER_COLORS_PATH = ".gitdrive_user_config/folder-colors.json";
+export const TRASH_FOLDER = ".gitdrive_trash";
+export const TRASH_MANIFEST_PATH = ".gitdrive_user_config/trash-manifest.json";
+export const TRASH_RETENTION_DAYS = 30;

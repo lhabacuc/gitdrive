@@ -133,7 +133,7 @@ export default function SettingsPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-64 overflow-y-auto rounded-xl border border-white/[0.06] p-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-64 overflow-y-auto rounded-xl border border-foreground/[0.06] p-2">
             {repos?.map((repo: GitHubRepo) => {
               const isSelected =
                 selectedRepo?.owner === repo.owner.login &&
@@ -146,7 +146,7 @@ export default function SettingsPage() {
                     "flex items-center gap-2 sm:gap-3 rounded-lg px-2.5 sm:px-3 py-2.5 text-left transition-all",
                     isSelected
                       ? "bg-primary/15 border border-primary/40"
-                      : "bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06]"
+                      : "bg-foreground/[0.03] border border-foreground/[0.06] hover:bg-foreground/[0.06]"
                   )}
                 >
                   <FolderGit2
@@ -216,7 +216,7 @@ export default function SettingsPage() {
                   "flex items-center gap-2 rounded-lg px-3 sm:px-4 py-2 text-sm transition-colors border",
                   form.viewMode === mode
                     ? "bg-primary/15 border-primary/40 text-foreground"
-                    : "bg-white/[0.03] border-white/[0.06] text-muted-foreground hover:bg-white/[0.06]"
+                    : "bg-foreground/[0.03] border-foreground/[0.06] text-muted-foreground hover:bg-foreground/[0.06]"
                 )}
               >
                 {mode === "grid" ? (
@@ -244,7 +244,7 @@ export default function SettingsPage() {
                   "rounded-lg px-3 sm:px-4 py-2 text-sm transition-colors border",
                   form.sortBy === field
                     ? "bg-primary/15 border-primary/40 text-foreground"
-                    : "bg-white/[0.03] border-white/[0.06] text-muted-foreground hover:bg-white/[0.06]"
+                    : "bg-foreground/[0.03] border-foreground/[0.06] text-muted-foreground hover:bg-foreground/[0.06]"
                 )}
               >
                 {field.charAt(0).toUpperCase() + field.slice(1)}
@@ -265,7 +265,7 @@ export default function SettingsPage() {
                   "flex items-center gap-2 rounded-lg px-3 sm:px-4 py-2 text-sm transition-colors border",
                   form.sortOrder === order
                     ? "bg-primary/15 border-primary/40 text-foreground"
-                    : "bg-white/[0.03] border-white/[0.06] text-muted-foreground hover:bg-white/[0.06]"
+                    : "bg-foreground/[0.03] border-foreground/[0.06] text-muted-foreground hover:bg-foreground/[0.06]"
                 )}
               >
                 {order === "asc" ? (
@@ -296,7 +296,7 @@ export default function SettingsPage() {
           onClick={() =>
             setForm((f) => ({ ...f, showHiddenFiles: !f.showHiddenFiles }))
           }
-          className="flex items-center justify-between w-full rounded-lg px-3 sm:px-4 py-3 border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+          className="flex items-center justify-between w-full rounded-lg px-3 sm:px-4 py-3 border border-foreground/[0.06] bg-foreground/[0.03] hover:bg-foreground/[0.06] transition-colors"
         >
           <div className="flex items-center gap-3">
             {form.showHiddenFiles ? (
@@ -314,7 +314,7 @@ export default function SettingsPage() {
           <div
             className={cn(
               "w-9 h-5 rounded-full transition-colors relative",
-              form.showHiddenFiles ? "bg-primary" : "bg-white/[0.12]"
+              form.showHiddenFiles ? "bg-primary" : "bg-foreground/[0.12]"
             )}
           >
             <div

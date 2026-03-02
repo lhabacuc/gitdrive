@@ -73,3 +73,14 @@ export const renameSchema = repoParamsSchema.extend({
   type: z.enum(["file", "dir"]),
   sha: z.string().optional(),
 });
+
+export const moveSchema = repoParamsSchema.extend({
+  items: z.array(
+    z.object({
+      path: z.string().min(1),
+      type: z.enum(["file", "dir"]),
+      sha: z.string().optional(),
+    })
+  ).min(1),
+  destinationDir: z.string(),
+});

@@ -86,7 +86,7 @@ export function InfoDialog({
         <DialogHeader>
           <DialogTitle>Info</DialogTitle>
         </DialogHeader>
-        <div className="divide-y divide-white/[0.06]">
+        <div className="divide-y divide-foreground/[0.06]">
           <InfoRow label="Name" value={item.name} />
           <InfoRow label="Type" value={item.type === "dir" ? "Folder" : "File"} />
           <InfoRow label="Path" value={item.path} copyable />

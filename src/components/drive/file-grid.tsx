@@ -3,19 +3,27 @@
 import { GitHubFile } from "@/types";
 import { FileCard } from "./file-card";
 import { FolderCard } from "./folder-card";
+import { FileList } from "./file-list";
+import { SelectionToolbar } from "./selection-toolbar";
 import { isPreviewable } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Loader2, FolderOpen } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/actions/delete-dialog";
+import { BulkDeleteDialog } from "@/components/actions/bulk-delete-dialog";
 import { UploadDialog } from "@/components/actions/upload-dialog";
 import { CreateFolderDialog } from "@/components/actions/create-folder-dialog";
 import { RenameDialog } from "@/components/actions/rename-dialog";
 import { InfoDialog } from "@/components/actions/info-dialog";
+import { HistoryDialog } from "@/components/actions/history-dialog";
 import { useDragSelect } from "@/hooks/use-drag-select";
 import { useDriveConfig } from "@/hooks/use-drive-config";
 import { useFolderColors, useUpdateFolderColor } from "@/hooks/use-folder-colors";
-import { CONFIG_FOLDER } from "@/lib/constants";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useClipboard } from "@/hooks/use-clipboard";
+import { useMove } from "@/hooks/use-move";
+import { useMoveToTrash } from "@/hooks/use-trash";
+import { CONFIG_FOLDER, TRASH_FOLDER } from "@/lib/constants";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -23,7 +31,9 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Upload, FolderPlus, CheckSquare } from "lucide-react";
+import { Upload, FolderPlus, CheckSquare, Scissors, ClipboardPaste } from "lucide-react";
+import { toast } from "sonner";
+import JSZip from "jszip";
 
 interface FileGridProps {
   items: GitHubFile[];
@@ -38,13 +48,21 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
   const [deleteItem, setDeleteItem] = useState<GitHubFile | null>(null);
   const [renameItem, setRenameItem] = useState<GitHubFile | null>(null);
   const [infoItem, setInfoItem] = useState<GitHubFile | null>(null);
+  const [historyItem, setHistoryItem] = useState<GitHubFile | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [uploadOpen, setUploadOpen] = useState(false);
   const [folderOpen, setFolderOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const gridRef = useRef<HTMLDivElement>(null);
   const { config } = useDriveConfig(owner, repo);
   const { colors } = useFolderColors(owner, repo);
   const updateFolderColor = useUpdateFolderColor();
+  const { clipboard, cut, clearClipboard } = useClipboard();
+  const moveMutation = useMove();
+  const trashMutation = useMoveToTrash();
 
   const onSelectionChange = useCallback((paths: Set<string>) => {
     setSelected(paths);
@@ -78,73 +96,23 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
     []
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   const visibleItems = items.filter((item) => {
-    // Always hide .gitkeep and the config folder
     if (item.name === ".gitkeep") return false;
     if (item.name === CONFIG_FOLDER) return false;
-    // Hide dotfiles unless showHiddenFiles is enabled
+    if (item.name === TRASH_FOLDER) return false;
     if (!config.showHiddenFiles && item.name.startsWith(".")) return false;
     return true;
   });
 
-  if (visibleItems.length === 0) {
-    return (
-      <>
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground flex-1">
-              <FolderOpen className="h-16 w-16 mb-4 opacity-30" />
-              <p className="text-base">Folder is Empty</p>
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => setUploadOpen(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Files
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => setFolderOpen(true)}>
-              <FolderPlus className="mr-2 h-4 w-4" />
-              New Folder
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-        <UploadDialog
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          owner={owner}
-          repo={repo}
-          currentPath={currentPath}
-        />
-        <CreateFolderDialog
-          open={folderOpen}
-          onOpenChange={setFolderOpen}
-          owner={owner}
-          repo={repo}
-          currentPath={currentPath}
-        />
-      </>
-    );
-  }
-
   const sorted = [...visibleItems].sort((a, b) => {
-    // Directories always come first
     if (a.type === "dir" && b.type !== "dir") return -1;
     if (a.type !== "dir" && b.type === "dir") return 1;
-
     const dir = config.sortOrder === "desc" ? -1 : 1;
     switch (config.sortBy) {
       case "size":
         return (a.size - b.size) * dir;
       case "date":
-        return a.name.localeCompare(b.name) * dir; // GitHub contents API doesn't return dates per-item; fallback to name
+        return a.name.localeCompare(b.name) * dir;
       case "name":
       default:
         return a.name.localeCompare(b.name) * dir;
@@ -167,12 +135,194 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
     document.body.removeChild(link);
   };
 
-  const folderCount = sorted.filter((i) => i.type === "dir").length;
-  const fileCount = sorted.filter((i) => i.type !== "dir").length;
+  const handleBulkDownload = async () => {
+    const selectedItems = sorted.filter(
+      (i) => selected.has(i.path) && i.type === "file"
+    );
+    if (selectedItems.length === 0) {
+      toast.error("No files selected for download");
+      return;
+    }
+    setDownloading(true);
+    try {
+      const zip = new JSZip();
+      for (const item of selectedItems) {
+        const params = new URLSearchParams({ owner, repo, path: item.path });
+        const res = await fetch(`/api/github/download?${params}`);
+        if (res.ok) {
+          const blob = await res.blob();
+          zip.file(item.name, blob);
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "download.zip";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${selectedItems.length} files`);
+    } catch {
+      toast.error("Failed to create ZIP");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedItems = sorted.filter((i) => selected.has(i.path));
+    setBulkDeleting(true);
+    try {
+      for (const item of selectedItems) {
+        await trashMutation.mutateAsync({
+          owner,
+          repo,
+          path: item.path,
+          type: item.type,
+          name: item.name,
+          sha: item.sha,
+          size: item.size,
+        });
+      }
+      toast.success(`${selectedItems.length} items moved to trash`);
+      setSelected(new Set());
+      setBulkDeleteOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleCutSelected = () => {
+    const selectedItems = sorted.filter((i) => selected.has(i.path));
+    if (selectedItems.length === 0) return;
+    cut(selectedItems, currentPath);
+    toast.success(`${selectedItems.length} item(s) cut`);
+  };
+
+  const handleCutSingle = (item: GitHubFile) => {
+    cut([item], currentPath);
+    toast.success(`"${item.name}" cut`);
+  };
+
+  const handlePaste = async () => {
+    if (!clipboard) return;
+    try {
+      await moveMutation.mutateAsync({
+        owner,
+        repo,
+        items: clipboard.items.map((i) => ({
+          path: i.path,
+          type: i.type,
+          sha: i.sha,
+        })),
+        destinationDir: currentPath,
+      });
+      toast.success(`${clipboard.items.length} item(s) moved`);
+      clearClipboard();
+      setSelected(new Set());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Move failed");
+    }
+  };
+
+  const cutPaths = new Set(clipboard?.items.map((i) => i.path) ?? []);
 
   const selectAll = () => {
     setSelected(new Set(sorted.map((item) => item.path)));
   };
+
+  const folderCount = sorted.filter((i) => i.type === "dir").length;
+  const fileCount = sorted.filter((i) => i.type !== "dir").length;
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSelectAll: selectAll,
+    onDelete: () => {
+      if (selected.size > 0) {
+        if (selected.size === 1) {
+          const item = sorted.find((i) => selected.has(i.path));
+          if (item) setDeleteItem(item);
+        } else {
+          setBulkDeleteOpen(true);
+        }
+      }
+    },
+    onDeselect: () => setSelected(new Set()),
+    onOpen: () => {
+      if (selected.size === 1) {
+        const item = sorted.find((i) => selected.has(i.path));
+        if (item) {
+          if (item.type === "dir") {
+            router.push(`/drive/${owner}/${repo}/tree/${item.path}`);
+          } else {
+            handlePreview(item);
+          }
+        }
+      }
+    },
+    onNavigate: (direction) => {
+      if (sorted.length === 0) return;
+      let next = focusedIndex;
+      if (direction === "right") next = Math.min(focusedIndex + 1, sorted.length - 1);
+      else if (direction === "left") next = Math.max(focusedIndex - 1, 0);
+      else if (direction === "down") next = Math.min(focusedIndex + 1, sorted.length - 1);
+      else if (direction === "up") next = Math.max(focusedIndex - 1, 0);
+      if (next < 0) next = 0;
+      setFocusedIndex(next);
+      const item = sorted[next];
+      if (item) setSelected(new Set([item.path]));
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (visibleItems.length === 0) {
+    return (
+      <>
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground flex-1">
+              <FolderOpen className="h-16 w-16 mb-4 opacity-30" />
+              <p className="text-base">Folder is Empty</p>
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => setUploadOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Files
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => setFolderOpen(true)}>
+              <FolderPlus className="mr-2 h-4 w-4" />
+              New Folder
+            </ContextMenuItem>
+            {clipboard && clipboard.items.length > 0 && (
+              <>
+                <ContextMenuSeparator />
+                <ContextMenuItem onClick={handlePaste}>
+                  <ClipboardPaste className="mr-2 h-4 w-4" />
+                  Paste {clipboard.items.length} item(s)
+                </ContextMenuItem>
+              </>
+            )}
+          </ContextMenuContent>
+        </ContextMenu>
+        <UploadDialog open={uploadOpen} onOpenChange={setUploadOpen} owner={owner} repo={repo} currentPath={currentPath} />
+        <CreateFolderDialog open={folderOpen} onOpenChange={setFolderOpen} owner={owner} repo={repo} currentPath={currentPath} />
+      </>
+    );
+  }
+
+  const isListView = config.viewMode === "list";
 
   return (
     <>
@@ -183,47 +333,71 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
             onMouseDown={handleMouseDown}
             className="relative flex-1 bg-[hsl(var(--view))]"
           >
-            <div className="grid grid-cols-2 gap-1.5 p-2 sm:grid-cols-3 sm:gap-1 sm:p-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
-              {sorted.map((item) =>
-                item.type === "dir" ? (
-                  <FolderCard
-                    key={item.path}
-                    folder={item}
-                    href={`/drive/${owner}/${repo}/tree/${item.path}`}
-                    owner={owner}
-                    repo={repo}
-                    selected={selected.has(item.path)}
-                    colorName={colors[item.path] || "blue"}
-                    onSelect={(e) => handleItemSelect(item.path, e)}
-                    onDelete={() => setDeleteItem(item)}
-                    onColorChange={(color) =>
-                      updateFolderColor.mutate({
-                        owner,
-                        repo,
-                        path: item.path,
-                        color,
-                      })
-                    }
-                    onRename={() => setRenameItem(item)}
-                    onGetInfo={() => setInfoItem(item)}
-                  />
-                ) : (
-                  <FileCard
-                    key={item.path}
-                    file={item}
-                    owner={owner}
-                    repo={repo}
-                    selected={selected.has(item.path)}
-                    onSelect={(e) => handleItemSelect(item.path, e)}
-                    onPreview={() => handlePreview(item)}
-                    onDownload={() => handleDownload(item)}
-                    onDelete={() => setDeleteItem(item)}
-                    onRename={() => setRenameItem(item)}
-                    onGetInfo={() => setInfoItem(item)}
-                  />
-                )
-              )}
-            </div>
+            {isListView ? (
+              <FileList
+                items={sorted}
+                owner={owner}
+                repo={repo}
+                selected={selected}
+                colors={colors}
+                onSelect={handleItemSelect}
+                onDelete={setDeleteItem}
+                onRename={setRenameItem}
+                onGetInfo={setInfoItem}
+                onDownload={handleDownload}
+                onHistory={setHistoryItem}
+                onCut={handleCutSingle}
+                cutPaths={cutPaths}
+              />
+            ) : (
+              <div className="grid grid-cols-2 gap-1.5 p-2 sm:grid-cols-3 sm:gap-1 sm:p-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
+                {sorted.map((item) =>
+                  item.type === "dir" ? (
+                    <FolderCard
+                      key={item.path}
+                      folder={item}
+                      href={`/drive/${owner}/${repo}/tree/${item.path}`}
+                      owner={owner}
+                      repo={repo}
+                      selected={selected.has(item.path)}
+                      colorName={colors[item.path] || "blue"}
+                      onSelect={(e) => handleItemSelect(item.path, e)}
+                      onDelete={() => setDeleteItem(item)}
+                      onColorChange={(color) =>
+                        updateFolderColor.mutate({
+                          owner,
+                          repo,
+                          path: item.path,
+                          color,
+                        })
+                      }
+                      onRename={() => setRenameItem(item)}
+                      onGetInfo={() => setInfoItem(item)}
+                      onCut={() => handleCutSingle(item)}
+                      onPaste={clipboard && clipboard.items.length > 0 ? handlePaste : undefined}
+                      isCut={cutPaths.has(item.path)}
+                    />
+                  ) : (
+                    <FileCard
+                      key={item.path}
+                      file={item}
+                      owner={owner}
+                      repo={repo}
+                      selected={selected.has(item.path)}
+                      onSelect={(e) => handleItemSelect(item.path, e)}
+                      onPreview={() => handlePreview(item)}
+                      onDownload={() => handleDownload(item)}
+                      onDelete={() => setDeleteItem(item)}
+                      onRename={() => setRenameItem(item)}
+                      onGetInfo={() => setInfoItem(item)}
+                      onHistory={() => setHistoryItem(item)}
+                      onCut={() => handleCutSingle(item)}
+                      isCut={cutPaths.has(item.path)}
+                    />
+                  )
+                )}
+              </div>
+            )}
 
             {/* Lasso selection rectangle */}
             {lassoRect && lassoRect.width > 3 && lassoRect.height > 3 && (
@@ -253,54 +427,54 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
             <CheckSquare className="mr-2 h-4 w-4" />
             Select All
           </ContextMenuItem>
+          {selected.size > 0 && (
+            <ContextMenuItem onClick={handleCutSelected}>
+              <Scissors className="mr-2 h-4 w-4" />
+              Cut {selected.size} item(s)
+            </ContextMenuItem>
+          )}
+          {clipboard && clipboard.items.length > 0 && (
+            <ContextMenuItem onClick={handlePaste}>
+              <ClipboardPaste className="mr-2 h-4 w-4" />
+              Paste {clipboard.items.length} item(s)
+            </ContextMenuItem>
+          )}
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* Nautilus-style item count bar */}
-      <div className="flex h-7 items-center justify-center bg-[hsl(var(--view))] border-t border-white/[0.06] shrink-0">
-        <span className="text-[11px] text-muted-foreground">
-          {folderCount > 0 && `${folderCount} folder${folderCount !== 1 ? "s" : ""}`}
-          {folderCount > 0 && fileCount > 0 && ", "}
-          {fileCount > 0 && `${fileCount} item${fileCount !== 1 ? "s" : ""}`}
-          {selected.size > 0 && ` (${selected.size} selected)`}
-        </span>
-      </div>
+      {/* Bottom bar: selection toolbar or item count */}
+      {selected.size > 0 ? (
+        <SelectionToolbar
+          count={selected.size}
+          onDownload={handleBulkDownload}
+          onDelete={() => {
+            if (selected.size === 1) {
+              const item = sorted.find((i) => selected.has(i.path));
+              if (item) setDeleteItem(item);
+            } else {
+              setBulkDeleteOpen(true);
+            }
+          }}
+          onDeselect={() => setSelected(new Set())}
+          downloading={downloading}
+        />
+      ) : (
+        <div className="flex h-7 items-center justify-center bg-[hsl(var(--view))] border-t border-foreground/[0.06] shrink-0">
+          <span className="text-[11px] text-muted-foreground">
+            {folderCount > 0 && `${folderCount} folder${folderCount !== 1 ? "s" : ""}`}
+            {folderCount > 0 && fileCount > 0 && ", "}
+            {fileCount > 0 && `${fileCount} item${fileCount !== 1 ? "s" : ""}`}
+          </span>
+        </div>
+      )}
 
-      <DeleteDialog
-        item={deleteItem}
-        owner={owner}
-        repo={repo}
-        open={!!deleteItem}
-        onOpenChange={(open) => !open && setDeleteItem(null)}
-      />
-      <RenameDialog
-        item={renameItem}
-        owner={owner}
-        repo={repo}
-        open={!!renameItem}
-        onOpenChange={(open) => !open && setRenameItem(null)}
-      />
-      <InfoDialog
-        item={infoItem}
-        owner={owner}
-        repo={repo}
-        open={!!infoItem}
-        onOpenChange={(open) => !open && setInfoItem(null)}
-      />
-      <UploadDialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        owner={owner}
-        repo={repo}
-        currentPath={currentPath}
-      />
-      <CreateFolderDialog
-        open={folderOpen}
-        onOpenChange={setFolderOpen}
-        owner={owner}
-        repo={repo}
-        currentPath={currentPath}
-      />
+      <DeleteDialog item={deleteItem} owner={owner} repo={repo} open={!!deleteItem} onOpenChange={(open) => !open && setDeleteItem(null)} />
+      <BulkDeleteDialog count={selected.size} open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen} onConfirm={handleBulkDelete} isPending={bulkDeleting} />
+      <RenameDialog item={renameItem} owner={owner} repo={repo} open={!!renameItem} onOpenChange={(open) => !open && setRenameItem(null)} />
+      <InfoDialog item={infoItem} owner={owner} repo={repo} open={!!infoItem} onOpenChange={(open) => !open && setInfoItem(null)} />
+      <HistoryDialog item={historyItem} owner={owner} repo={repo} open={!!historyItem} onOpenChange={(open) => !open && setHistoryItem(null)} />
+      <UploadDialog open={uploadOpen} onOpenChange={setUploadOpen} owner={owner} repo={repo} currentPath={currentPath} />
+      <CreateFolderDialog open={folderOpen} onOpenChange={setFolderOpen} owner={owner} repo={repo} currentPath={currentPath} />
     </>
   );
 }

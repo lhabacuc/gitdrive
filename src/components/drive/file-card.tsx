@@ -1,7 +1,7 @@
 "use client";
 
 import { GitHubFile } from "@/types";
-import { formatBytes, getFileIcon } from "@/lib/utils";
+import { formatBytes, getFileIcon, isImageFile } from "@/lib/utils";
 import {
   File, FileText, FileCode, Image, Music, Video, Archive,
   type LucideIcon,
@@ -13,8 +13,9 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Download, Eye, Trash2, Link2, Pencil, Info } from "lucide-react";
+import { Download, Eye, Trash2, Link2, Pencil, Info, History, Scissors } from "lucide-react";
 import { toast } from "sonner";
+import { ImageThumbnail } from "./image-thumbnail";
 
 const iconComponents: Record<string, LucideIcon> = {
   file: File,
@@ -37,6 +38,9 @@ interface FileCardProps {
   onDelete: () => void;
   onRename?: () => void;
   onGetInfo?: () => void;
+  onHistory?: () => void;
+  onCut?: () => void;
+  isCut?: boolean;
 }
 
 export function FileCard({
@@ -50,9 +54,13 @@ export function FileCard({
   onDelete,
   onRename,
   onGetInfo,
+  onHistory,
+  onCut,
+  isCut,
 }: FileCardProps) {
   const iconType = getFileIcon(file.name);
   const IconComponent = iconComponents[iconType] || File;
+  const showThumbnail = isImageFile(file.name) && file.download_url;
 
   const handleCopyLink = () => {
     const link = `${window.location.origin}/preview/${owner}/${repo}/${file.path}`;
@@ -70,11 +78,19 @@ export function FileCard({
           className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
             selected
               ? "bg-primary/20"
-              : "hover:bg-white/[0.04] active:bg-white/[0.08]"
-          }`}
+              : "hover:bg-foreground/[0.04] active:bg-foreground/[0.08]"
+          } ${isCut ? "opacity-40" : ""}`}
         >
-          <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center">
-            <IconComponent className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/60" />
+          <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center relative overflow-hidden rounded">
+            {showThumbnail ? (
+              <ImageThumbnail
+                src={file.download_url!}
+                alt={file.name}
+                className="h-12 w-12 sm:h-16 sm:w-16"
+              />
+            ) : (
+              <IconComponent className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/60" />
+            )}
           </div>
           <span
             className={`text-[11px] sm:text-xs leading-tight text-center w-full truncate px-1 rounded ${
@@ -108,6 +124,18 @@ export function FileCard({
           <ContextMenuItem onClick={onGetInfo}>
             <Info className="mr-2 h-4 w-4" />
             Get Info
+          </ContextMenuItem>
+        )}
+        {onHistory && (
+          <ContextMenuItem onClick={onHistory}>
+            <History className="mr-2 h-4 w-4" />
+            Version History
+          </ContextMenuItem>
+        )}
+        {onCut && (
+          <ContextMenuItem onClick={onCut}>
+            <Scissors className="mr-2 h-4 w-4" />
+            Cut
           </ContextMenuItem>
         )}
         <ContextMenuSeparator />

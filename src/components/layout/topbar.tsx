@@ -43,24 +43,24 @@ export function Topbar() {
 
   return (
     <>
-      <header className="flex h-[46px] items-center gap-1 border-b border-white/[0.08] bg-[hsl(var(--topbar))] px-1.5 sm:px-2 shrink-0">
+      <header className="flex h-[46px] items-center gap-1 border-b border-foreground/[0.08] bg-[hsl(var(--topbar))] px-1.5 sm:px-2 shrink-0">
         {/* Left: Hamburger (mobile) + Navigation */}
         <div className="flex items-center">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.07] transition-colors md:hidden"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-foreground/[0.07] transition-colors md:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
           <button
             onClick={() => router.back()}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.07] transition-colors hidden sm:block"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-foreground/[0.07] transition-colors hidden sm:block"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => router.forward()}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.07] transition-colors hidden sm:block"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-foreground/[0.07] transition-colors hidden sm:block"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -76,7 +76,7 @@ export function Topbar() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Type to search..."
-                  className="h-8 pl-9 pr-3 text-sm bg-[hsl(var(--view))] border-white/[0.08] rounded-lg focus-visible:ring-1 focus-visible:ring-primary"
+                  className="h-8 pl-9 pr-3 text-sm bg-[hsl(var(--view))] border-foreground/[0.08] rounded-lg focus-visible:ring-1 focus-visible:ring-primary"
                   autoFocus
                   onBlur={() => {
                     if (!query) setSearchOpen(false);
@@ -91,7 +91,7 @@ export function Topbar() {
               </div>
             </form>
           ) : (
-            <div className="flex items-center bg-[hsl(var(--view))] rounded-lg border border-white/[0.08] h-8 px-1 max-w-md w-full min-w-0">
+            <div className="flex items-center bg-[hsl(var(--view))] rounded-lg border border-foreground/[0.08] h-8 px-1 max-w-md w-full min-w-0">
               {pathParts.length > 0 ? (
                 <div className="flex items-center gap-0.5 overflow-hidden overflow-x-auto scrollbar-thin px-1 min-w-0">
                   {/* On mobile, show only the last 2 segments */}
@@ -131,13 +131,13 @@ export function Topbar() {
             className={`rounded-lg p-2 transition-colors ${
               searchOpen
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-white/[0.07]"
+                : "text-muted-foreground hover:bg-foreground/[0.07]"
             }`}
             disabled={!owner || !repo}
           >
             <Search className="h-[18px] w-[18px]" />
           </button>
-          <button className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.07] transition-colors hidden sm:block">
+          <button className="rounded-lg p-2 text-muted-foreground hover:bg-foreground/[0.07] transition-colors hidden sm:block">
             <LayoutGrid className="h-[18px] w-[18px]" />
           </button>
         </div>

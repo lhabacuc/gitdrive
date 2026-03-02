@@ -1,6 +1,6 @@
 "use client";
 
-import { useDelete } from "@/hooks/use-delete";
+import { useMoveToTrash } from "@/hooks/use-trash";
 import { GitHubFile } from "@/types";
 import {
   Dialog,
@@ -28,20 +28,22 @@ export function DeleteDialog({
   open,
   onOpenChange,
 }: DeleteDialogProps) {
-  const deleteMutation = useDelete();
+  const trashMutation = useMoveToTrash();
 
   const handleDelete = async () => {
     if (!item) return;
 
     try {
-      await deleteMutation.mutateAsync({
+      await trashMutation.mutateAsync({
         owner,
         repo,
         path: item.path,
-        sha: item.sha,
         type: item.type,
+        name: item.name,
+        sha: item.sha,
+        size: item.size,
       });
-      toast.success(`"${item.name}" deleted`);
+      toast.success(`"${item.name}" moved to trash`);
       onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
@@ -57,9 +59,9 @@ export function DeleteDialog({
             Delete {item?.type === "dir" ? "Folder" : "File"}
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <strong>{item?.name}</strong>?
-            {item?.type === "dir" && " This will delete all files inside this folder."}
-            {" "}This action cannot be undone.
+            Are you sure you want to move <strong>{item?.name}</strong> to trash?
+            {item?.type === "dir" && " This will move all files inside this folder."}
+            {" "}You can restore it from the Trash page.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2">
@@ -69,15 +71,15 @@ export function DeleteDialog({
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={deleteMutation.isPending}
+            disabled={trashMutation.isPending}
           >
-            {deleteMutation.isPending ? (
+            {trashMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                Moving...
               </>
             ) : (
-              "Delete"
+              "Move to Trash"
             )}
           </Button>
         </div>

@@ -4,6 +4,33 @@
 
 @layer base {
   :root {
+    /* Adwaita Light Theme */
+    --background: 0 0% 98%;              /* #fafafa */
+    --foreground: 0 0% 13%;              /* #212121 */
+    --card: 0 0% 100%;                   /* #ffffff */
+    --card-foreground: 0 0% 13%;
+    --popover: 0 0% 100%;               /* #ffffff */
+    --popover-foreground: 0 0% 13%;
+    --primary: 211 77% 55%;             /* #3584e4 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;              /* #f5f5f5 */
+    --secondary-foreground: 0 0% 13%;
+    --muted: 0 0% 96%;                  /* #f5f5f5 */
+    --muted-foreground: 0 0% 45%;       /* #737373 */
+    --accent: 211 77% 55%;              /* #3584e4 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 355 74% 43%;         /* #c01c28 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;                 /* #e5e5e5 */
+    --input: 0 0% 92%;
+    --ring: 211 77% 55%;
+    --radius: 0.75rem;
+    --sidebar: 0 0% 96%;               /* #f5f5f5 */
+    --topbar: 0 0% 96%;                /* #f5f5f5 */
+    --view: 0 0% 98%;                  /* #fafafa */
+  }
+
+  .dark {
     /* GNOME Adwaita Dark Theme */
     --background: 240 2% 14%;          /* #222226 window-bg */
     --foreground: 0 0% 100%;            /* #ffffff */
@@ -50,7 +77,7 @@
   }
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.12) transparent;
+    scrollbar-color: rgba(128,128,128,0.25) transparent;
   }
 }
 

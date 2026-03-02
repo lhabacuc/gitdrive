@@ -49,6 +49,8 @@ export function isPreviewable(filename: string): boolean {
     "env", "gitignore", "dockerignore", "makefile", "dockerfile",
     "csv", "log", "cfg", "ini", "conf",
     "pdf",
+    "mp4", "webm", "mov",
+    "mp3", "wav", "ogg", "flac", "aac",
   ];
   return previewable.includes(ext) || filename.toLowerCase() === "makefile" || filename.toLowerCase() === "dockerfile";
 }
@@ -67,4 +69,63 @@ export function isTextFile(filename: string): boolean {
     "env", "gitignore", "dockerignore", "csv", "log", "cfg", "ini", "conf",
   ];
   return textExts.includes(ext) || filename.toLowerCase() === "makefile" || filename.toLowerCase() === "dockerfile";
+}
+
+export function isMarkdownFile(filename: string): boolean {
+  return getFileExtension(filename) === "md";
+}
+
+export function isCodeFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  const codeExts = [
+    "js", "ts", "jsx", "tsx", "py", "rb", "go", "rs", "java",
+    "c", "cpp", "h", "css", "scss", "html", "xml", "json",
+    "yaml", "yml", "toml", "sh", "bash", "zsh", "sql",
+  ];
+  return codeExts.includes(ext);
+}
+
+export function getLanguageFromExtension(filename: string): string {
+  const ext = getFileExtension(filename);
+  const langMap: Record<string, string> = {
+    js: "javascript",
+    jsx: "jsx",
+    ts: "typescript",
+    tsx: "tsx",
+    py: "python",
+    rb: "ruby",
+    go: "go",
+    rs: "rust",
+    java: "java",
+    c: "c",
+    cpp: "cpp",
+    h: "c",
+    css: "css",
+    scss: "scss",
+    html: "html",
+    xml: "xml",
+    json: "json",
+    yaml: "yaml",
+    yml: "yaml",
+    toml: "toml",
+    sh: "bash",
+    bash: "bash",
+    zsh: "bash",
+    sql: "sql",
+  };
+  return langMap[ext] || "text";
+}
+
+export function isVideoFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  return ["mp4", "webm", "mov"].includes(ext);
+}
+
+export function isAudioFile(filename: string): boolean {
+  const ext = getFileExtension(filename);
+  return ["mp3", "wav", "ogg", "flac", "aac"].includes(ext);
+}
+
+export function isPdfFile(filename: string): boolean {
+  return getFileExtension(filename) === "pdf";
 }

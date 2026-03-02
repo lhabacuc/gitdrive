@@ -62,3 +62,13 @@ export interface DriveConfig {
   showHiddenFiles: boolean;
   uploadLimitMB: number;
 }
+
+export interface TrashItem {
+  originalPath: string;
+  trashPath: string;
+  deletedAt: string;
+  type: "file" | "dir";
+  name: string;
+  sha?: string;
+  size?: number;
+}

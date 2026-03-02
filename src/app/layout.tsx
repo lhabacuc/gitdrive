@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegistrar } from "@/components/providers/sw-registrar";
 
@@ -43,14 +44,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <SessionProvider>
-          <QueryProvider>
-            {children}
-            <Toaster theme="dark" position="bottom-right" />
-          </QueryProvider>
-        </SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <QueryProvider>
+              {children}
+              <Toaster position="bottom-right" />
+            </QueryProvider>
+          </SessionProvider>
+        </ThemeProvider>
         <ServiceWorkerRegistrar />
       </body>
     </html>

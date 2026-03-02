@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { GitHubFile, FolderColorName } from "@/types";
-import { FolderOpen, Trash2, Link2, Pencil, Info } from "lucide-react";
+import { FolderOpen, Trash2, Link2, Pencil, Info, Scissors, ClipboardPaste } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -31,6 +31,9 @@ interface FolderCardProps {
   onColorChange?: (color: FolderColorName) => void;
   onRename?: () => void;
   onGetInfo?: () => void;
+  onCut?: () => void;
+  onPaste?: () => void;
+  isCut?: boolean;
 }
 
 function AdwaitaFolderIcon({
@@ -85,6 +88,9 @@ export function FolderCard({
   onColorChange,
   onRename,
   onGetInfo,
+  onCut,
+  onPaste,
+  isCut,
 }: FolderCardProps) {
   const queryClient = useQueryClient();
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -122,8 +128,8 @@ export function FolderCard({
           className={`group relative flex flex-col items-center gap-1 p-2 sm:p-2 rounded-xl transition-colors ${
             selected
               ? "bg-primary/20"
-              : "hover:bg-white/[0.04] active:bg-white/[0.08]"
-          }`}
+              : "hover:bg-foreground/[0.04] active:bg-foreground/[0.08]"
+          } ${isCut ? "opacity-40" : ""}`}
         >
           <Link href={href} className="flex flex-col items-center gap-1 sm:gap-1.5 w-full">
             <AdwaitaFolderIcon className="h-12 w-12 sm:h-16 sm:w-16" colorName={colorName} />
@@ -161,13 +167,25 @@ export function FolderCard({
             Get Info
           </ContextMenuItem>
         )}
+        {onCut && (
+          <ContextMenuItem onClick={onCut}>
+            <Scissors className="mr-2 h-4 w-4" />
+            Cut
+          </ContextMenuItem>
+        )}
+        {onPaste && (
+          <ContextMenuItem onClick={onPaste}>
+            <ClipboardPaste className="mr-2 h-4 w-4" />
+            Paste Here
+          </ContextMenuItem>
+        )}
         {onColorChange && (
           <>
             <ContextMenuSeparator />
             <ContextMenuSub>
               <ContextMenuSubTrigger>
                 <div
-                  className="mr-2 h-4 w-4 rounded-full border border-white/20"
+                  className="mr-2 h-4 w-4 rounded-full border border-foreground/20"
                   style={{ backgroundColor: FOLDER_COLOR_PALETTES[colorName].front }}
                 />
                 Colour
@@ -180,7 +198,7 @@ export function FolderCard({
                       onClick={() => onColorChange(c)}
                       className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${
                         c === colorName
-                          ? "border-white"
+                          ? "border-foreground"
                           : "border-transparent"
                       }`}
                       style={{
