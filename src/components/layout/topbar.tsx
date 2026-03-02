@@ -42,6 +42,36 @@ export function Topbar() {
     }
   }
 
+  const dataTransferType = "application/x-gitdrive-items";
+  const moveDroppedTo = async (destinationDir: string, e: DragEvent) => {
+    e.preventDefault();
+    if (!owner || !repo) return;
+    const raw = e.dataTransfer.getData(dataTransferType);
+    if (!raw) return;
+    try {
+      const items = JSON.parse(raw) as {
+        path: string;
+        type: "file" | "dir";
+        sha?: string;
+      }[];
+      const res = await fetch("/api/github/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner,
+          repo,
+          items,
+          destinationDir,
+        }),
+      });
+      if (!res.ok) throw new Error("Move failed");
+      router.refresh();
+      toast.success(`${items.length} item(s) moved`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Move failed");
+    }
+  };
+
   return (
     <>
       <header className="flex h-[46px] items-center gap-1 border-b border-foreground/[0.08] bg-[hsl(var(--topbar))] px-1.5 sm:px-2 shrink-0">
@@ -164,32 +194,3 @@ export function Topbar() {
     </>
   );
 }
-  const dataTransferType = "application/x-gitdrive-items";
-  const moveDroppedTo = async (destinationDir: string, e: DragEvent) => {
-    e.preventDefault();
-    if (!owner || !repo) return;
-    const raw = e.dataTransfer.getData(dataTransferType);
-    if (!raw) return;
-    try {
-      const items = JSON.parse(raw) as {
-        path: string;
-        type: "file" | "dir";
-        sha?: string;
-      }[];
-      const res = await fetch("/api/github/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          owner,
-          repo,
-          items,
-          destinationDir,
-        }),
-      });
-      if (!res.ok) throw new Error("Move failed");
-      router.refresh();
-      toast.success(`${items.length} item(s) moved`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Move failed");
-    }
-  };
