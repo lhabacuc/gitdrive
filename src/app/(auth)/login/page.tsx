@@ -1,16 +1,21 @@
 import { signIn } from "@/lib/auth";
 import { Github } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 p-4 sm:p-8">
         <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary">
-              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <polyline points="13 2 13 9 20 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <div className="mx-auto flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center">
+            <Image
+              src="/icon-192.png"
+              alt="GitDrive"
+              width={192}
+              height={192}
+              className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl"
+              priority
+            />
           </div>
           <h1 className="mt-6 text-2xl sm:text-3xl font-bold text-foreground">GitDrive</h1>
           <p className="mt-2 text-sm text-muted-foreground">

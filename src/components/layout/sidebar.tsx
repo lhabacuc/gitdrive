@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { HardDrive, Star, Clock, Trash2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "./user-profile";
+import { AppLogoMinimal } from "@/components/ui/app-logo";
 
 const navItems = [
   { label: "Recent", href: "/drive", icon: Clock },
@@ -19,8 +20,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       {/* Headerbar spacer — same height as topbar to align */}
-      <div className="h-[46px] flex items-center px-4 border-b border-white/[0.08]">
-        <span className="text-sm font-semibold text-foreground">Files</span>
+      <div className="h-[46px] flex items-center gap-2.5 px-4 border-b border-white/[0.08]">
+        <AppLogoMinimal className="h-5 w-5" />
+        <span className="text-sm font-semibold text-foreground">GitDrive</span>
       </div>
 
       {/* Nav */}
