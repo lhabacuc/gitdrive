@@ -8,6 +8,16 @@ interface TrashManifest {
   items: TrashItem[];
 }
 
+function getBase64ContentOrThrow(
+  file: Awaited<ReturnType<typeof getFileContent>>,
+  path: string
+): string {
+  if (file.type !== "file") {
+    throw new Error(`Expected file at ${path}, got ${file.type}`);
+  }
+  return file.content || "";
+}
+
 export async function getTrashManifest(
   octokit: Octokit,
   owner: string,
@@ -15,7 +25,10 @@ export async function getTrashManifest(
 ): Promise<{ manifest: TrashManifest; sha: string | null }> {
   try {
     const file = await getFileContent(octokit, owner, repo, TRASH_MANIFEST_PATH);
-    const content = Buffer.from(file.content || "", "base64").toString("utf-8");
+    const content = Buffer.from(
+      getBase64ContentOrThrow(file, TRASH_MANIFEST_PATH),
+      "base64"
+    ).toString("utf-8");
     return { manifest: JSON.parse(content), sha: file.sha };
   } catch {
     return { manifest: { items: [] }, sha: null };
@@ -61,7 +74,15 @@ export async function moveToTrash(
   } else {
     // For files: get content then upload to trash, delete original
     const file = await getFileContent(octokit, owner, repo, item.path);
-    await uploadFile(octokit, owner, repo, trashPath, file.content || "", `Move ${item.path} to trash`, undefined);
+    await uploadFile(
+      octokit,
+      owner,
+      repo,
+      trashPath,
+      getBase64ContentOrThrow(file, item.path),
+      `Move ${item.path} to trash`,
+      undefined
+    );
     // Delete original by deleting file
     await octokit.repos.deleteFile({
       owner,
@@ -99,7 +120,15 @@ export async function restoreFromTrash(
     await renameFolder(octokit, owner, repo, trashItem.trashPath, trashItem.originalPath, `Restore ${trashItem.name} from trash`, branch);
   } else {
     const file = await getFileContent(octokit, owner, repo, trashItem.trashPath);
-    await uploadFile(octokit, owner, repo, trashItem.originalPath, file.content || "", `Restore ${trashItem.name} from trash`, undefined);
+    await uploadFile(
+      octokit,
+      owner,
+      repo,
+      trashItem.originalPath,
+      getBase64ContentOrThrow(file, trashItem.trashPath),
+      `Restore ${trashItem.name} from trash`,
+      undefined
+    );
     await octokit.repos.deleteFile({
       owner,
       repo,

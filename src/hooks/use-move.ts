@@ -32,11 +32,13 @@ export function useMove() {
     mutationFn: moveItems,
     onMutate: async (variables) => {
       // Determine source directories for optimistic removal
-      const sourceDirs = new Set(
-        variables.items.map((item) =>
-          item.path.split("/").slice(0, -1).join("/")
-        )
-      );
+      const sourceDirs: string[] = [];
+      for (const item of variables.items) {
+        const sourceDir = item.path.split("/").slice(0, -1).join("/");
+        if (!sourceDirs.includes(sourceDir)) {
+          sourceDirs.push(sourceDir);
+        }
+      }
 
       const previousStates: { queryKey: string[]; data: GitHubFile[] | undefined }[] = [];
 
@@ -65,11 +67,13 @@ export function useMove() {
     },
     onSettled: (_data, _error, variables) => {
       // Invalidate source and destination
-      const sourceDirs = new Set(
-        variables.items.map((item) =>
-          item.path.split("/").slice(0, -1).join("/")
-        )
-      );
+      const sourceDirs: string[] = [];
+      for (const item of variables.items) {
+        const sourceDir = item.path.split("/").slice(0, -1).join("/");
+        if (!sourceDirs.includes(sourceDir)) {
+          sourceDirs.push(sourceDir);
+        }
+      }
       for (const sourceDir of sourceDirs) {
         queryClient.invalidateQueries({
           queryKey: ["contents", variables.owner, variables.repo, sourceDir],
