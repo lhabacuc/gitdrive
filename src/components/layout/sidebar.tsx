@@ -9,8 +9,8 @@ import { AppLogoMinimal } from "@/components/ui/app-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
-  { label: "Recent", href: "/drive", icon: Clock },
-  { label: "Starred", href: "/drive", icon: Star },
+  { label: "Recent", href: "/recent", icon: Clock },
+  { label: "Starred", href: "/starred", icon: Star },
   { label: "My Drive", href: "/drive", icon: HardDrive },
   { label: "Trash", href: "/trash", icon: Trash2 },
 ];
@@ -29,7 +29,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Nav */}
       <nav className="flex-1 py-2 px-2 space-y-0.5">
         {navItems.map((item, i) => {
-          const isActive = item.label === "My Drive" && pathname.startsWith(item.href);
+          const isActive =
+            item.label === "My Drive"
+              ? pathname.startsWith(item.href)
+              : pathname === item.href;
           return (
             <Link
               key={`${item.label}-${i}`}

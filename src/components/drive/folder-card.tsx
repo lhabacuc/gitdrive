@@ -2,7 +2,17 @@
 
 import { useCallback, useRef } from "react";
 import { GitHubFile, FolderColorName } from "@/types";
-import { FolderOpen, Trash2, Link2, Pencil, Info, Scissors, ClipboardPaste } from "lucide-react";
+import {
+  FolderOpen,
+  Trash2,
+  Link2,
+  Pencil,
+  Info,
+  Scissors,
+  ClipboardPaste,
+  Star,
+  Tag,
+} from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -18,6 +28,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { fetchContents } from "@/hooks/use-github-contents";
 import { FOLDER_COLOR_PALETTES, FOLDER_COLOR_NAMES } from "@/lib/folder-colors";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface FolderCardProps {
   folder: GitHubFile;
@@ -33,6 +44,13 @@ interface FolderCardProps {
   onGetInfo?: () => void;
   onCut?: () => void;
   onPaste?: () => void;
+  onToggleStar?: () => void;
+  onEditTags?: () => void;
+  onOpen?: () => void;
+  onItemDragStart?: (e: React.DragEvent, folder: GitHubFile) => void;
+  onDropToFolder?: (e: React.DragEvent, destinationPath: string) => void;
+  starred?: boolean;
+  tags?: string[];
   isCut?: boolean;
 }
 
@@ -90,6 +108,13 @@ export function FolderCard({
   onGetInfo,
   onCut,
   onPaste,
+  onToggleStar,
+  onEditTags,
+  onOpen,
+  onItemDragStart,
+  onDropToFolder,
+  starred,
+  tags = [],
   isCut,
 }: FolderCardProps) {
   const queryClient = useQueryClient();
@@ -125,13 +150,27 @@ export function FolderCard({
           onClick={onSelect}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          draggable
+          onDragStart={(e) => onItemDragStart?.(e, folder)}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+          }}
+          onDrop={(e) => onDropToFolder?.(e, folder.path)}
           className={`group relative flex flex-col items-center gap-1 p-2 sm:p-2 rounded-xl transition-colors ${
             selected
               ? "bg-primary/20"
               : "hover:bg-foreground/[0.04] active:bg-foreground/[0.08]"
           } ${isCut ? "opacity-40" : ""}`}
         >
-          <Link href={href} className="flex flex-col items-center gap-1 sm:gap-1.5 w-full">
+          {starred && (
+            <Star className="absolute right-1 top-1 h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+          )}
+          <Link
+            href={href}
+            onClick={onOpen}
+            className="flex flex-col items-center gap-1 sm:gap-1.5 w-full"
+          >
             <AdwaitaFolderIcon className="h-12 w-12 sm:h-16 sm:w-16" colorName={colorName} />
             <span
               className={`text-[11px] sm:text-xs leading-tight text-center w-full truncate px-1 rounded ${
@@ -140,12 +179,17 @@ export function FolderCard({
             >
               {folder.name}
             </span>
+            {tags.length > 0 && (
+              <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                {tags[0]}
+              </Badge>
+            )}
           </Link>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem asChild>
-          <Link href={href} className="flex items-center">
+          <Link href={href} onClick={onOpen} className="flex items-center">
             <FolderOpen className="mr-2 h-4 w-4" />
             Open
           </Link>
@@ -171,6 +215,18 @@ export function FolderCard({
           <ContextMenuItem onClick={onCut}>
             <Scissors className="mr-2 h-4 w-4" />
             Cut
+          </ContextMenuItem>
+        )}
+        {onToggleStar && (
+          <ContextMenuItem onClick={onToggleStar}>
+            <Star className={`mr-2 h-4 w-4 ${starred ? "fill-amber-400 text-amber-400" : ""}`} />
+            {starred ? "Unstar" : "Star"}
+          </ContextMenuItem>
+        )}
+        {onEditTags && (
+          <ContextMenuItem onClick={onEditTags}>
+            <Tag className="mr-2 h-4 w-4" />
+            Edit Tags
           </ContextMenuItem>
         )}
         {onPaste && (

@@ -2,11 +2,12 @@
 
 import { Search, ChevronLeft, ChevronRight, Menu, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { DragEvent, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SidebarContent } from "./sidebar";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
+import { toast } from "sonner";
 
 export function Topbar() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -98,7 +99,15 @@ export function Topbar() {
                   {pathParts.map((part, i) => (
                     <div key={part.href} className={`flex items-center gap-0.5 shrink-0 ${
                       i < pathParts.length - 2 ? "hidden sm:flex" : "flex"
-                    }`}>
+                    }`}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      const dest =
+                        i === 0
+                          ? ""
+                          : pathSegments?.slice(0, i).join("/") || "";
+                      moveDroppedTo(dest, e);
+                    }}>
                       {((i > 0 && i >= pathParts.length - 2) || (i > 0 && typeof window !== "undefined" && window.innerWidth >= 640)) && (
                         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       )}
@@ -155,3 +164,32 @@ export function Topbar() {
     </>
   );
 }
+  const dataTransferType = "application/x-gitdrive-items";
+  const moveDroppedTo = async (destinationDir: string, e: DragEvent) => {
+    e.preventDefault();
+    if (!owner || !repo) return;
+    const raw = e.dataTransfer.getData(dataTransferType);
+    if (!raw) return;
+    try {
+      const items = JSON.parse(raw) as {
+        path: string;
+        type: "file" | "dir";
+        sha?: string;
+      }[];
+      const res = await fetch("/api/github/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner,
+          repo,
+          items,
+          destinationDir,
+        }),
+      });
+      if (!res.ok) throw new Error("Move failed");
+      router.refresh();
+      toast.success(`${items.length} item(s) moved`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Move failed");
+    }
+  };

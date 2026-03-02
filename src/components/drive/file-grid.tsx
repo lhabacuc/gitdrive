@@ -5,7 +5,7 @@ import { FileCard } from "./file-card";
 import { FolderCard } from "./folder-card";
 import { FileList } from "./file-list";
 import { SelectionToolbar } from "./selection-toolbar";
-import { isPreviewable } from "@/lib/utils";
+import { getFileExtension, isPreviewable } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Loader2, FolderOpen } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -23,6 +23,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { useMove } from "@/hooks/use-move";
 import { useMoveToTrash } from "@/hooks/use-trash";
+import { useDriveMetadata } from "@/hooks/use-drive-metadata";
 import { CONFIG_FOLDER, TRASH_FOLDER } from "@/lib/constants";
 import {
   ContextMenu,
@@ -54,6 +55,8 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
   const [folderOpen, setFolderOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkMoving, setBulkMoving] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -63,6 +66,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
   const { clipboard, cut, clearClipboard } = useClipboard();
   const moveMutation = useMove();
   const trashMutation = useMoveToTrash();
+  const { addRecent, isStarred, getTags, toggleStar, setTags } = useDriveMetadata(owner, repo);
 
   const onSelectionChange = useCallback((paths: Set<string>) => {
     setSelected(paths);
@@ -119,10 +123,25 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
     }
   });
 
-  const handlePreview = (file: GitHubFile) => {
-    if (isPreviewable(file.name)) {
-      router.push(`/preview/${owner}/${repo}/${file.path}`);
+  const handleOpenItem = (item: GitHubFile) => {
+    addRecent({
+      owner,
+      repo,
+      path: item.path,
+      name: item.name,
+      type: item.type,
+    });
+    if (item.type === "dir") {
+      router.push(`/drive/${owner}/${repo}/tree/${item.path}`);
+      return;
     }
+    if (isPreviewable(item.name)) {
+      router.push(`/preview/${owner}/${repo}/${item.path}`);
+    }
+  };
+
+  const handlePreview = (file: GitHubFile) => {
+    handleOpenItem(file);
   };
 
   const handleDownload = async (file: GitHubFile) => {
@@ -208,7 +227,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
     toast.success(`"${item.name}" cut`);
   };
 
-  const handlePaste = async () => {
+  const handlePaste = async (destinationDir = currentPath) => {
     if (!clipboard) return;
     try {
       await moveMutation.mutateAsync({
@@ -219,13 +238,168 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
           type: i.type,
           sha: i.sha,
         })),
-        destinationDir: currentPath,
+        destinationDir,
       });
       toast.success(`${clipboard.items.length} item(s) moved`);
       clearClipboard();
       setSelected(new Set());
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Move failed");
+    }
+  };
+
+  const handleMoveSelected = async () => {
+    const selectedItems = sorted.filter((i) => selected.has(i.path));
+    if (selectedItems.length === 0) return;
+    const destination = window.prompt(
+      'Move selected items to directory (relative path, empty = root):',
+      currentPath
+    );
+    if (destination === null) return;
+    setBulkMoving(true);
+    try {
+      await moveMutation.mutateAsync({
+        owner,
+        repo,
+        items: selectedItems.map((i) => ({
+          path: i.path,
+          type: i.type,
+          sha: i.sha,
+        })),
+        destinationDir: destination.trim(),
+      });
+      setSelected(new Set());
+      toast.success(`${selectedItems.length} item(s) moved`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Move failed");
+    } finally {
+      setBulkMoving(false);
+    }
+  };
+
+  const handleToggleStar = (item: GitHubFile) => {
+    const starred = toggleStar({
+      owner,
+      repo,
+      path: item.path,
+      name: item.name,
+      type: item.type,
+    });
+    toast.success(starred ? "Added to Starred" : "Removed from Starred");
+  };
+
+  const handleEditTags = (item: GitHubFile) => {
+    const existing = getTags(item.path);
+    const input = window.prompt(
+      "Tags (comma-separated, max 8):",
+      existing.join(", ")
+    );
+    if (input === null) return;
+    const tags = setTags(
+      {
+        owner,
+        repo,
+        path: item.path,
+        name: item.name,
+        type: item.type,
+      },
+      input.split(",")
+    );
+    toast.success(tags.length ? "Tags updated" : "Tags cleared");
+  };
+
+  const dataTransferType = "application/x-gitdrive-items";
+  const handleItemDragStart = (e: React.DragEvent, draggedItem: GitHubFile) => {
+    const selectedItems =
+      selected.has(draggedItem.path) && selected.size > 1
+        ? sorted.filter((item) => selected.has(item.path))
+        : [draggedItem];
+    const payload = selectedItems.map((item) => ({
+      path: item.path,
+      type: item.type,
+      sha: item.sha,
+    }));
+    e.dataTransfer.setData(dataTransferType, JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const moveDroppedItems = async (e: React.DragEvent, destinationPath: string) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData(dataTransferType);
+    if (!raw) return;
+    try {
+      const payload = JSON.parse(raw) as { path: string; type: "file" | "dir"; sha?: string }[];
+      const sourceParentPaths = new Set(
+        payload.map((item) => item.path.split("/").slice(0, -1).join("/"))
+      );
+      if (payload.some((item) => item.path === destinationPath)) return;
+      if (sourceParentPaths.size === 1 && sourceParentPaths.has(destinationPath)) return;
+      await moveMutation.mutateAsync({
+        owner,
+        repo,
+        items: payload,
+        destinationDir: destinationPath,
+      });
+      toast.success(`${payload.length} item(s) moved`);
+      setSelected(new Set());
+      clearClipboard();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Move failed");
+    }
+  };
+
+  const handleExtractZip = async () => {
+    const zipItems = sorted.filter(
+      (item) =>
+        selected.has(item.path) &&
+        item.type === "file" &&
+        getFileExtension(item.name) === "zip"
+    );
+    if (zipItems.length === 0) {
+      toast.error("Select at least one .zip file");
+      return;
+    }
+    setExtracting(true);
+    try {
+      let uploaded = 0;
+      for (const zipItem of zipItems) {
+        const params = new URLSearchParams({ owner, repo, path: zipItem.path });
+        const res = await fetch(`/api/github/download?${params}`);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const zip = await JSZip.loadAsync(blob);
+        const baseName = zipItem.name.replace(/\.zip$/i, "");
+        const destinationRoot = currentPath
+          ? `${currentPath}/${baseName}`
+          : baseName;
+        // Upload each unzipped file back to the current directory.
+        // Directories are implied by file paths in Git.
+        const uploadTasks = Object.values(zip.files)
+          .filter((entry) => !entry.dir)
+          .map(async (entry) => {
+            const data = await entry.async("base64");
+            const normalized = entry.name.replace(/^\/+/, "");
+            const path = `${destinationRoot}/${normalized}`;
+            const uploadRes = await fetch("/api/github/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                owner,
+                repo,
+                path,
+                content: data,
+                message: `Extract ${zipItem.name}: ${normalized}`,
+              }),
+            });
+            if (uploadRes.ok) uploaded += 1;
+          });
+        await Promise.all(uploadTasks);
+      }
+      toast.success(`Extracted ${uploaded} file(s)`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to extract ZIP");
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -241,6 +415,9 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onSelectAll: selectAll,
+    onCopy: handleCutSelected,
+    onCut: handleCutSelected,
+    onPaste: () => handlePaste(currentPath),
     onDelete: () => {
       if (selected.size > 0) {
         if (selected.size === 1) {
@@ -256,11 +433,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
       if (selected.size === 1) {
         const item = sorted.find((i) => selected.has(i.path));
         if (item) {
-          if (item.type === "dir") {
-            router.push(`/drive/${owner}/${repo}/tree/${item.path}`);
-          } else {
-            handlePreview(item);
-          }
+          handleOpenItem(item);
         }
       }
     },
@@ -308,7 +481,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
             {clipboard && clipboard.items.length > 0 && (
               <>
                 <ContextMenuSeparator />
-                <ContextMenuItem onClick={handlePaste}>
+                <ContextMenuItem onClick={() => handlePaste()}>
                   <ClipboardPaste className="mr-2 h-4 w-4" />
                   Paste {clipboard.items.length} item(s)
                 </ContextMenuItem>
@@ -347,6 +520,13 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
                 onDownload={handleDownload}
                 onHistory={setHistoryItem}
                 onCut={handleCutSingle}
+                onToggleStar={handleToggleStar}
+                onEditTags={handleEditTags}
+                isStarred={isStarred}
+                getTags={getTags}
+                onDropToFolder={moveDroppedItems}
+                onItemDragStart={handleItemDragStart}
+                onOpenItem={handleOpenItem}
                 cutPaths={cutPaths}
               />
             ) : (
@@ -374,7 +554,24 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
                       onRename={() => setRenameItem(item)}
                       onGetInfo={() => setInfoItem(item)}
                       onCut={() => handleCutSingle(item)}
-                      onPaste={clipboard && clipboard.items.length > 0 ? handlePaste : undefined}
+                      onPaste={
+                        clipboard && clipboard.items.length > 0
+                          ? () => handlePaste(item.path)
+                          : undefined
+                      }
+                      onToggleStar={() => handleToggleStar(item)}
+                      onEditTags={() => handleEditTags(item)}
+                      starred={isStarred(item.path)}
+                      tags={getTags(item.path)}
+                      onOpen={() => addRecent({
+                        owner,
+                        repo,
+                        path: item.path,
+                        name: item.name,
+                        type: item.type,
+                      })}
+                      onItemDragStart={handleItemDragStart}
+                      onDropToFolder={moveDroppedItems}
                       isCut={cutPaths.has(item.path)}
                     />
                   ) : (
@@ -392,6 +589,11 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
                       onGetInfo={() => setInfoItem(item)}
                       onHistory={() => setHistoryItem(item)}
                       onCut={() => handleCutSingle(item)}
+                      onToggleStar={() => handleToggleStar(item)}
+                      onEditTags={() => handleEditTags(item)}
+                      starred={isStarred(item.path)}
+                      tags={getTags(item.path)}
+                      onItemDragStart={handleItemDragStart}
                       isCut={cutPaths.has(item.path)}
                     />
                   )
@@ -434,7 +636,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
             </ContextMenuItem>
           )}
           {clipboard && clipboard.items.length > 0 && (
-            <ContextMenuItem onClick={handlePaste}>
+            <ContextMenuItem onClick={() => handlePaste()}>
               <ClipboardPaste className="mr-2 h-4 w-4" />
               Paste {clipboard.items.length} item(s)
             </ContextMenuItem>
@@ -447,6 +649,17 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
         <SelectionToolbar
           count={selected.size}
           onDownload={handleBulkDownload}
+          onMove={handleMoveSelected}
+          onExtract={handleExtractZip}
+          canExtract={
+            !extracting &&
+            sorted.some(
+              (item) =>
+                selected.has(item.path) &&
+                item.type === "file" &&
+                getFileExtension(item.name) === "zip"
+            )
+          }
           onDelete={() => {
             if (selected.size === 1) {
               const item = sorted.find((i) => selected.has(i.path));
@@ -456,7 +669,7 @@ export function FileGrid({ items, owner, repo, currentPath, isLoading }: FileGri
             }
           }}
           onDeselect={() => setSelected(new Set())}
-          downloading={downloading}
+          downloading={downloading || bulkMoving || extracting}
         />
       ) : (
         <div className="flex h-7 items-center justify-center bg-[hsl(var(--view))] border-t border-foreground/[0.06] shrink-0">

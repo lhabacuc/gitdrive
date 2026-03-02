@@ -4,6 +4,9 @@ import { useEffect } from "react";
 
 interface KeyboardShortcutsOptions {
   onSelectAll: () => void;
+  onCopy?: () => void;
+  onCut?: () => void;
+  onPaste?: () => void;
   onDelete: () => void;
   onDeselect: () => void;
   onOpen: () => void;
@@ -13,6 +16,9 @@ interface KeyboardShortcutsOptions {
 
 export function useKeyboardShortcuts({
   onSelectAll,
+  onCopy,
+  onCut,
+  onPaste,
   onDelete,
   onDeselect,
   onOpen,
@@ -31,6 +37,21 @@ export function useKeyboardShortcuts({
       if ((e.ctrlKey || e.metaKey) && e.key === "a") {
         e.preventDefault();
         onSelectAll();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        onCopy?.();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x") {
+        e.preventDefault();
+        onCut?.();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        onPaste?.();
         return;
       }
 
@@ -76,5 +97,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, onSelectAll, onDelete, onDeselect, onOpen, onNavigate]);
+  }, [enabled, onSelectAll, onCopy, onCut, onPaste, onDelete, onDeselect, onOpen, onNavigate]);
 }

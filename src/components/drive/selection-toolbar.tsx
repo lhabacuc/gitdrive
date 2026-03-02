@@ -1,11 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, X } from "lucide-react";
+import { Archive, Download, MoveRight, Trash2, X } from "lucide-react";
 
 interface SelectionToolbarProps {
   count: number;
   onDownload: () => void;
+  onMove: () => void;
+  onExtract?: () => void;
+  canExtract?: boolean;
   onDelete: () => void;
   onDeselect: () => void;
   downloading?: boolean;
@@ -14,6 +17,9 @@ interface SelectionToolbarProps {
 export function SelectionToolbar({
   count,
   onDownload,
+  onMove,
+  onExtract,
+  canExtract,
   onDelete,
   onDeselect,
   downloading,
@@ -34,6 +40,26 @@ export function SelectionToolbar({
           <Download className="h-3.5 w-3.5" />
           {downloading ? "Zipping..." : "Download"}
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs gap-1.5"
+          onClick={onMove}
+        >
+          <MoveRight className="h-3.5 w-3.5" />
+          Move
+        </Button>
+        {canExtract && onExtract && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={onExtract}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Extract ZIP
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

@@ -13,9 +13,21 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Download, Eye, Trash2, Link2, Pencil, Info, History, Scissors } from "lucide-react";
+import {
+  Download,
+  Eye,
+  Trash2,
+  Link2,
+  Pencil,
+  Info,
+  History,
+  Scissors,
+  Star,
+  Tag,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ImageThumbnail } from "./image-thumbnail";
+import { Badge } from "@/components/ui/badge";
 
 const iconComponents: Record<string, LucideIcon> = {
   file: File,
@@ -40,6 +52,11 @@ interface FileCardProps {
   onGetInfo?: () => void;
   onHistory?: () => void;
   onCut?: () => void;
+  onToggleStar?: () => void;
+  onEditTags?: () => void;
+  starred?: boolean;
+  tags?: string[];
+  onItemDragStart?: (e: React.DragEvent, file: GitHubFile) => void;
   isCut?: boolean;
 }
 
@@ -56,6 +73,11 @@ export function FileCard({
   onGetInfo,
   onHistory,
   onCut,
+  onToggleStar,
+  onEditTags,
+  starred,
+  tags = [],
+  onItemDragStart,
   isCut,
 }: FileCardProps) {
   const iconType = getFileIcon(file.name);
@@ -75,12 +97,17 @@ export function FileCard({
           data-item-path={file.path}
           onClick={onSelect}
           onDoubleClick={onPreview}
+          draggable
+          onDragStart={(e) => onItemDragStart?.(e, file)}
           className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
             selected
               ? "bg-primary/20"
               : "hover:bg-foreground/[0.04] active:bg-foreground/[0.08]"
           } ${isCut ? "opacity-40" : ""}`}
         >
+          {starred && (
+            <Star className="absolute right-1 top-1 h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+          )}
           <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center relative overflow-hidden rounded">
             {showThumbnail ? (
               <ImageThumbnail
@@ -102,6 +129,11 @@ export function FileCard({
           <span className="text-[10px] text-muted-foreground">
             {formatBytes(file.size)}
           </span>
+          {tags.length > 0 && (
+            <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+              {tags[0]}
+            </Badge>
+          )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
@@ -136,6 +168,18 @@ export function FileCard({
           <ContextMenuItem onClick={onCut}>
             <Scissors className="mr-2 h-4 w-4" />
             Cut
+          </ContextMenuItem>
+        )}
+        {onToggleStar && (
+          <ContextMenuItem onClick={onToggleStar}>
+            <Star className={`mr-2 h-4 w-4 ${starred ? "fill-amber-400 text-amber-400" : ""}`} />
+            {starred ? "Unstar" : "Star"}
+          </ContextMenuItem>
+        )}
+        {onEditTags && (
+          <ContextMenuItem onClick={onEditTags}>
+            <Tag className="mr-2 h-4 w-4" />
+            Edit Tags
           </ContextMenuItem>
         )}
         <ContextMenuSeparator />

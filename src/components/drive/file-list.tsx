@@ -5,7 +5,7 @@ import { formatBytes, getFileIcon, isPreviewable } from "@/lib/utils";
 import {
   File, FileText, FileCode, Image, Music, Video, Archive, Folder,
   type LucideIcon,
-  MoreHorizontal, Eye, Download, Trash2, Link2, Pencil, Info, History, Scissors,
+  MoreHorizontal, Eye, Download, Trash2, Link2, Pencil, Info, History, Scissors, Star, Tag,
 } from "lucide-react";
 import {
   ContextMenu,
@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FOLDER_COLOR_PALETTES } from "@/lib/folder-colors";
+import { Badge } from "@/components/ui/badge";
 
 const iconComponents: Record<string, LucideIcon> = {
   file: File,
@@ -49,6 +50,13 @@ interface FileListProps {
   onDownload: (item: GitHubFile) => void;
   onHistory?: (item: GitHubFile) => void;
   onCut?: (item: GitHubFile) => void;
+  onToggleStar?: (item: GitHubFile) => void;
+  onEditTags?: (item: GitHubFile) => void;
+  isStarred?: (path: string) => boolean;
+  getTags?: (path: string) => string[];
+  onDropToFolder?: (e: React.DragEvent, destinationPath: string) => void;
+  onItemDragStart?: (e: React.DragEvent, item: GitHubFile) => void;
+  onOpenItem?: (item: GitHubFile) => void;
   cutPaths?: Set<string>;
 }
 
@@ -65,11 +73,19 @@ export function FileList({
   onDownload,
   onHistory,
   onCut,
+  onToggleStar,
+  onEditTags,
+  isStarred,
+  getTags,
+  onDropToFolder,
+  onItemDragStart,
+  onOpenItem,
   cutPaths,
 }: FileListProps) {
   const router = useRouter();
 
   const handleOpen = (item: GitHubFile) => {
+    onOpenItem?.(item);
     if (item.type === "dir") {
       router.push(`/drive/${owner}/${repo}/tree/${item.path}`);
     } else if (isPreviewable(item.name)) {
@@ -103,6 +119,8 @@ export function FileList({
         const iconType = isDir ? "folder" : getFileIcon(item.name);
         const IconComponent = isDir ? Folder : (iconComponents[iconType] || File);
         const isSelected = selected.has(item.path);
+        const starred = isStarred?.(item.path) ?? false;
+        const tags = getTags?.(item.path) ?? [];
 
         return (
           <ContextMenu key={item.path}>
@@ -111,10 +129,21 @@ export function FileList({
                 data-item-path={item.path}
                 onClick={(e) => onSelect(item.path, e)}
                 onDoubleClick={() => handleOpen(item)}
+                draggable
+                onDragStart={(e) => onItemDragStart?.(e, item)}
+                onDragOver={(e) => {
+                  if (!isDir) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(e) => {
+                  if (!isDir) return;
+                  onDropToFolder?.(e, item.path);
+                }}
                 className={`flex items-center gap-2 px-3 h-9 transition-colors cursor-default ${
                   isSelected
                     ? "bg-primary/20"
-                    : "hover:bg-foreground/[0.04]"
+                  : "hover:bg-foreground/[0.04]"
                 } ${isCut(item.path) ? "opacity-40" : ""}`}
               >
                 <div className="w-6 flex items-center justify-center shrink-0">
@@ -132,6 +161,14 @@ export function FileList({
                 }`}>
                   {item.name}
                 </span>
+                {tags.length > 0 && (
+                  <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                    {tags[0]}
+                  </Badge>
+                )}
+                {starred && (
+                  <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                )}
                 <span className="w-20 text-right text-[11px] text-muted-foreground hidden sm:block">
                   {!isDir ? formatBytes(item.size) : "—"}
                 </span>
@@ -169,6 +206,18 @@ export function FileList({
                       <DropdownMenuItem onClick={() => onCut(item)}>
                         <Scissors className="mr-2 h-4 w-4" />
                         Cut
+                      </DropdownMenuItem>
+                    )}
+                    {onToggleStar && (
+                      <DropdownMenuItem onClick={() => onToggleStar(item)}>
+                        <Star className={`mr-2 h-4 w-4 ${starred ? "fill-amber-400 text-amber-400" : ""}`} />
+                        {starred ? "Unstar" : "Star"}
+                      </DropdownMenuItem>
+                    )}
+                    {onEditTags && (
+                      <DropdownMenuItem onClick={() => onEditTags(item)}>
+                        <Tag className="mr-2 h-4 w-4" />
+                        Edit Tags
                       </DropdownMenuItem>
                     )}
                     {!isDir && (
@@ -217,6 +266,18 @@ export function FileList({
                 <ContextMenuItem onClick={() => onCut(item)}>
                   <Scissors className="mr-2 h-4 w-4" />
                   Cut
+                </ContextMenuItem>
+              )}
+              {onToggleStar && (
+                <ContextMenuItem onClick={() => onToggleStar(item)}>
+                  <Star className={`mr-2 h-4 w-4 ${starred ? "fill-amber-400 text-amber-400" : ""}`} />
+                  {starred ? "Unstar" : "Star"}
+                </ContextMenuItem>
+              )}
+              {onEditTags && (
+                <ContextMenuItem onClick={() => onEditTags(item)}>
+                  <Tag className="mr-2 h-4 w-4" />
+                  Edit Tags
                 </ContextMenuItem>
               )}
               {!isDir && (
